@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="percent cut">
+<meta name="mobile-web-app-capable" content="yes">
 <title>percent cut</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
@@ -1220,32 +1224,68 @@ function renderQR(dataURL) {
   var ctx = qrCanvas.getContext('2d');
   ctx.clearRect(0,0,220,220);
 
-  try {
-    var div = document.createElement('div');
-    new QRCode(div, {
-      text: dataURL,
-      width: 220, height: 220,
-      colorDark: '#111',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.L
-    });
-    setTimeout(function() {
-      var src = null;
-      var el = div.querySelector('canvas');
-      if (el) src = el.toDataURL();
-      else { el = div.querySelector('img'); if(el) src = el.src; }
-      if (src) {
-        var qi = new Image();
-        qi.onload = function(){ ctx.drawImage(qi,0,0,220,220); };
-        qi.src = src;
-      }
-    }, 300);
-  } catch(e) {
+  // 로딩 표시
+  ctx.fillStyle = '#f4f4f4';
+  ctx.fillRect(0,0,220,220);
+  ctx.fillStyle = '#999';
+  ctx.font = '14px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('업로드 중...', 110, 115);
+
+  // Cloudinary 업로드
+  var cloudName = 'dyppqgbhm';
+  var uploadPreset = 'percentcut';
+
+  // base64 → Blob
+  var byteStr = atob(dataURL.split(',')[1]);
+  var mime = 'image/jpeg';
+  var ab = new ArrayBuffer(byteStr.length);
+  var ia = new Uint8Array(ab);
+  for (var i=0; i<byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+  var blob = new Blob([ab], {type: mime});
+
+  var formData = new FormData();
+  formData.append('file', blob, 'percentcut.jpg');
+  formData.append('upload_preset', uploadPreset);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + cloudName + '/image/upload', true);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var res = JSON.parse(xhr.responseText);
+      var imageUrl = res.secure_url;
+      // URL로 QR 생성
+      ctx.clearRect(0,0,220,220);
+      var div = document.createElement('div');
+      new QRCode(div, {
+        text: imageUrl,
+        width: 220, height: 220,
+        colorDark: '#111',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      setTimeout(function() {
+        var el = div.querySelector('canvas') || div.querySelector('img');
+        if (el) {
+          var src = el.tagName==='CANVAS' ? el.toDataURL() : el.src;
+          var qi = new Image();
+          qi.onload = function(){ ctx.drawImage(qi,0,0,220,220); };
+          qi.src = src;
+        }
+      }, 300);
+    } else {
+      ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
+      ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('업로드 실패 😢', 110, 100);
+      ctx.fillText('인터넷 연결을 확인해주세요', 110, 125);
+    }
+  };
+  xhr.onerror = function() {
     ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
-    ctx.fillStyle='#555'; ctx.font='14px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('데이터가 너무 커요',110,100);
-    ctx.fillText('해상도를 낮춰 재시도하세요',110,125);
-  }
+    ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('연결 오류 😢', 110, 110);
+  };
+  xhr.send(formData);
 }
 
 function showIntro() {
