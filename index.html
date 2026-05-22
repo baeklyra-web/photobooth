@@ -27,8 +27,6 @@ html, body {
   color: var(--black);
   font-family: 'Noto Sans KR', sans-serif;
   overflow: hidden;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-user-select: none;
 }
 
 .screen {
@@ -356,7 +354,7 @@ html, body {
   transition: opacity 0.15s;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.countdown-overlay.show { opacity: 1; }
+.countdown-overlay.show { opacity: 1; pointer-events: none; }
 
 /* flash */
 #flash {
