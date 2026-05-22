@@ -885,7 +885,10 @@ function startShot() {
     mediaRecorder.onstop = function() {
       var mime = mediaRecorder.mimeType || 'video/webm';
       videoBlob = new Blob(recordedChunks, { type: mime });
-      uploadVideoQR();
+      // QR 화면이 열려있으면 바로 업로드, 아니면 showQR 때 자동 호출됨
+      if (!document.getElementById('screen-qr').classList.contains('hidden')) {
+        uploadVideoQR();
+      }
     };
     mediaRecorder.start();
     // 10초 후 자동 중단
@@ -1131,7 +1134,6 @@ function applyPreview() {
 // ── QR ──
 function showQR() {
   switchScreen('screen-qr');
-  // 영상 QR 카드 초기화
   var vctx = document.getElementById('qr-video-canvas').getContext('2d');
   vctx.fillStyle = '#f4f4f4';
   vctx.fillRect(0,0,220,220);
@@ -1139,7 +1141,13 @@ function showQR() {
   vctx.font = '13px sans-serif';
   vctx.textAlign = 'center';
   vctx.fillText('영상 처리 중...', 110, 115);
+
   buildCompositeAndQR();
+
+  // 이미 녹화 완료됐으면 바로 업로드
+  if (videoBlob) {
+    uploadVideoQR();
+  }
 }
 
 function uploadVideoQR() {
@@ -1152,48 +1160,50 @@ function uploadVideoQR() {
   vctx.textAlign = 'center';
   vctx.fillText('영상 업로드 중...', 110, 115);
 
-  var reader = new FileReader();
-  reader.onload = function() {
-    var base64 = reader.result.split(',')[1];
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'https://api.imgbb.com/1/upload?key=12128642b5dd947f967c34e8f15a4162', true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-      vctx.clearRect(0,0,220,220);
-      if (xhr.status === 200) {
-        var res = JSON.parse(xhr.responseText);
-        var videoUrl = res.data.url;
-        var div = document.createElement('div');
-        new QRCode(div, {
-          text: videoUrl,
-          width: 220, height: 220,
-          colorDark: '#111',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
-        });
-        setTimeout(function() {
-          var el = div.querySelector('canvas') || div.querySelector('img');
-          if (el) {
-            var src = el.tagName==='CANVAS' ? el.toDataURL() : el.src;
-            var qi = new Image();
-            qi.onload = function(){ vctx.drawImage(qi,0,0,220,220); };
-            qi.src = src;
-          }
-        }, 300);
-      } else {
-        vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
-        vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
-        vctx.fillText('영상 업로드 실패', 110, 110);
-      }
-    };
-    xhr.onerror = function() {
+  var cloudName = 'dyppqgbhm';
+  var uploadPreset = 'percentcut-video';
+
+  var formData = new FormData();
+  formData.append('file', videoBlob, 'percentcut.webm');
+  formData.append('upload_preset', uploadPreset);
+  formData.append('resource_type', 'video');
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + cloudName + '/video/upload', true);
+  xhr.onload = function() {
+    vctx.clearRect(0,0,220,220);
+    if (xhr.status === 200) {
+      var res = JSON.parse(xhr.responseText);
+      var videoUrl = res.secure_url;
+      var div = document.createElement('div');
+      new QRCode(div, {
+        text: videoUrl,
+        width: 220, height: 220,
+        colorDark: '#111',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      setTimeout(function() {
+        var el = div.querySelector('canvas') || div.querySelector('img');
+        if (el) {
+          var src = el.tagName==='CANVAS' ? el.toDataURL() : el.src;
+          var qi = new Image();
+          qi.onload = function(){ vctx.drawImage(qi,0,0,220,220); };
+          qi.src = src;
+        }
+      }, 300);
+    } else {
       vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
       vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
-      vctx.fillText('연결 오류', 110, 110);
-    };
-    xhr.send('image=' + encodeURIComponent(base64));
+      vctx.fillText('영상 업로드 실패('+xhr.status+')', 110, 110);
+    }
   };
-  reader.readAsDataURL(videoBlob);
+  xhr.onerror = function() {
+    vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
+    vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
+    vctx.fillText('연결 오류', 110, 110);
+  };
+  xhr.send(formData);
 }
 
 function buildCompositeAndQR() {
