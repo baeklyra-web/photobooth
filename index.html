@@ -693,6 +693,9 @@ html, body {
 
 <!-- ② 카메라 -->
 <div class="screen hidden" id="screen-camera">
+  <div style="position:absolute;top:0;left:0;right:0;z-index:50;padding:16px 20px;display:flex;align-items:center;">
+    <button id="btn-cam-back" style="background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:15px;font-weight:500;padding:8px 16px;border-radius:20px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(255,255,255,0.1);font-family:'Noto Sans KR',sans-serif;">← 중단</button>
+  </div>
   <video id="video" autoplay playsinline muted></video>
   <div class="cam-bottom">
     <div class="progress-bar" id="progress-bar">
@@ -758,7 +761,7 @@ html, body {
 
 <!-- ⑤ QR -->
 <div class="screen hidden" id="screen-qr">
-  <div class="qr-inner">
+  <div style="flex:1;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;align-items:center;gap:20px;padding:32px 24px 20px;">
     <div class="qr-card">
       <div class="qr-head">📸 사진 QR</div>
       <canvas id="qr-canvas" width="220" height="220"></canvas>
@@ -771,11 +774,11 @@ html, body {
       </div>
       <div class="qr-desc">촬영 영상을 저장하세요!</div>
     </div>
-    <div class="qr-btn-row">
-      <button class="btn-sub" id="btn-qr-back">← 돌아가기</button>
-      <button class="btn-sub" id="btn-qr-home">홈으로</button>
-      <button class="btn-sub primary" id="btn-qr-new">새로 찍기</button>
-    </div>
+  </div>
+  <div style="width:100%;padding:12px 20px 36px;background:#fff;border-top:1px solid #eee;display:flex;gap:10px;flex-shrink:0;">
+    <button id="btn-qr-back"  style="flex:1;padding:16px;border-radius:12px;border:1.5px solid #ddd;background:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:500;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(0,0,0,0.1);">← 돌아가기</button>
+    <button id="btn-qr-home"  style="flex:1;padding:16px;border-radius:12px;border:1.5px solid #ddd;background:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:500;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(0,0,0,0.1);">홈으로</button>
+    <button id="btn-qr-new"   style="flex:1;padding:16px;border-radius:12px;border:none;background:#111;color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(255,255,255,0.1);">새로 찍기</button>
   </div>
 </div>
 
@@ -1146,7 +1149,31 @@ function uploadVideoQR() {
   makeVideoDownload();
 }
 
-function makeVideoDownload() {
+function stopShooting() {
+  // 카운트다운 숨기기
+  countdown.classList.remove('show');
+  isShooting = false;
+  // 녹화 중단
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  mediaRecorder = null;
+  recordedChunks = []; videoBlob = null;
+  // 상태 초기화
+  allShots = []; selected = []; shotIndex = 0;
+  for (var i = 0; i < 6; i++) {
+    document.getElementById('pb'+i).classList.remove('done');
+    var cell = document.getElementById('tc'+i);
+    cell.innerHTML = '<span class="num">'+(i+1)+'</span>';
+  }
+  document.getElementById('shot-label').textContent = '0 / 6';
+  document.getElementById('btn-shutter').disabled = false;
+  document.getElementById('btn-cam-done').style.display = 'none';
+  document.getElementById('timer-select').style.pointerEvents = 'auto';
+  // 카메라 끄고 홈으로
+  if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+  switchScreen('screen-intro');
+}
   if (!videoBlob) return;
   var area = document.getElementById('video-download-area');
   var statusEl = document.getElementById('video-status');
@@ -1427,6 +1454,7 @@ window.addEventListener('load', function() {
   bindBtn('btn-banner-close', function(){ document.getElementById('home-banner').style.display='none'; });
   bindBtn('btn-go-intro',     function(){ showIntro(); });
   bindBtn('btn-start-camera', function(){ startCamera(); });
+  bindBtn('btn-cam-back',     function(){ stopShooting(); });
   bindBtn('btn-shutter',      function(){ startShot(); });
   bindBtn('btn-flip',         function(){ flipCamera(); });
   bindBtn('btn-cam-done',     function(){ showSelect(); });
