@@ -92,7 +92,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 0 8px;
+  padding: 8px 0 0;
   gap: 0;
 }
 .home-logo-frames {
@@ -138,7 +138,7 @@ html, body {
 
 .home-bottom {
   width: 100%;
-  padding: 0 20px 0;
+  padding: 0 20px 48px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -765,9 +765,11 @@ html, body {
       <div class="qr-desc">폰 카메라로 스캔하면<br>사진이 바로 열려요.<br>길게 눌러서 저장하세요!</div>
     </div>
     <div class="qr-card" id="video-qr-card">
-      <div class="qr-head">🎬 영상 QR</div>
-      <canvas id="qr-video-canvas" width="220" height="220"></canvas>
-      <div class="qr-desc">영상도 QR로 받아가세요!</div>
+      <div class="qr-head">🎬 영상 저장</div>
+      <div id="video-download-area" style="width:100%;text-align:center;">
+        <div id="video-status" style="font-size:13px;color:#999;padding:16px 0;">영상 처리 중...</div>
+      </div>
+      <div class="qr-desc">촬영 영상을 저장하세요!</div>
     </div>
     <div class="qr-btn-row">
       <button class="btn-sub" id="btn-qr-back">← 돌아가기</button>
@@ -885,9 +887,8 @@ function startShot() {
     mediaRecorder.onstop = function() {
       var mime = mediaRecorder.mimeType || 'video/webm';
       videoBlob = new Blob(recordedChunks, { type: mime });
-      // QR 화면이 열려있으면 바로 업로드, 아니면 showQR 때 자동 호출됨
       if (!document.getElementById('screen-qr').classList.contains('hidden')) {
-        uploadVideoQR();
+        makeVideoDownload();
       }
     };
     mediaRecorder.start();
@@ -1134,76 +1135,41 @@ function applyPreview() {
 // ── QR ──
 function showQR() {
   switchScreen('screen-qr');
-  var vctx = document.getElementById('qr-video-canvas').getContext('2d');
-  vctx.fillStyle = '#f4f4f4';
-  vctx.fillRect(0,0,220,220);
-  vctx.fillStyle = '#999';
-  vctx.font = '13px sans-serif';
-  vctx.textAlign = 'center';
-  vctx.fillText('영상 처리 중...', 110, 115);
-
+  document.getElementById('video-status').textContent = '영상 처리 중...';
   buildCompositeAndQR();
-
-  // 이미 녹화 완료됐으면 바로 업로드
   if (videoBlob) {
-    uploadVideoQR();
+    makeVideoDownload();
   }
 }
 
 function uploadVideoQR() {
+  makeVideoDownload();
+}
+
+function makeVideoDownload() {
   if (!videoBlob) return;
-  var vctx = document.getElementById('qr-video-canvas').getContext('2d');
-  vctx.fillStyle = '#f4f4f4';
-  vctx.fillRect(0,0,220,220);
-  vctx.fillStyle = '#999';
-  vctx.font = '13px sans-serif';
-  vctx.textAlign = 'center';
-  vctx.fillText('영상 업로드 중...', 110, 115);
+  var area = document.getElementById('video-download-area');
+  var statusEl = document.getElementById('video-status');
 
-  var cloudName = 'dyppqgbhm';
-  var uploadPreset = 'percentcut-video';
+  var ext = videoBlob.type.indexOf('mp4') >= 0 ? 'mp4' : 'webm';
+  var file = new File([videoBlob], 'percentcut.' + ext, { type: videoBlob.type });
 
-  var formData = new FormData();
-  formData.append('file', videoBlob, 'percentcut.webm');
-  formData.append('upload_preset', uploadPreset);
-  formData.append('resource_type', 'video');
-
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + cloudName + '/video/upload', true);
-  xhr.onload = function() {
-    vctx.clearRect(0,0,220,220);
-    if (xhr.status === 200) {
-      var res = JSON.parse(xhr.responseText);
-      var videoUrl = res.secure_url;
-      var div = document.createElement('div');
-      new QRCode(div, {
-        text: videoUrl,
-        width: 220, height: 220,
-        colorDark: '#111',
-        colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-      setTimeout(function() {
-        var el = div.querySelector('canvas') || div.querySelector('img');
-        if (el) {
-          var src = el.tagName==='CANVAS' ? el.toDataURL() : el.src;
-          var qi = new Image();
-          qi.onload = function(){ vctx.drawImage(qi,0,0,220,220); };
-          qi.src = src;
-        }
-      }, 300);
-    } else {
-      vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
-      vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
-      vctx.fillText('영상 업로드 실패('+xhr.status+')', 110, 110);
+  // Web Share API (파일 공유) 지원 확인
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    statusEl.style.display = 'none';
+    var btn = document.createElement('button');
+    btn.style.cssText = 'width:100%;padding:14px;background:#111;color:#fff;border:none;border-radius:12px;text-align:center;font-size:15px;font-weight:700;font-family:"Noto Sans KR",sans-serif;margin-top:8px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(0,0,0,0.1);';
+    btn.textContent = '영상 공유하기 (AirDrop 등)';
+    function doShare(e) {
+      if (e) e.preventDefault();
+      navigator.share({ files: [file], title: 'percent cut 영상' }).catch(function(){});
     }
-  };
-  xhr.onerror = function() {
-    vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
-    vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
-    vctx.fillText('연결 오류', 110, 110);
-  };
-  xhr.send(formData);
+    btn.addEventListener('touchend', doShare, { passive: false });
+    btn.addEventListener('click', doShare, false);
+    area.appendChild(btn);
+  } else {
+    statusEl.textContent = '이 기기에서는 영상 공유가 지원되지 않아요 😢';
+  }
 }
 
 function buildCompositeAndQR() {
@@ -1413,6 +1379,10 @@ function restartAll() {
   recordedChunks=[]; videoBlob=null; videoQRDone=false;
   if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
   mediaRecorder=null;
+  var area = document.getElementById('video-download-area');
+  if (area) {
+    area.innerHTML = '<div id="video-status" style="font-size:13px;color:#999;padding:16px 0;">영상 처리 중...</div>';
+  }
   setTimer(0);
   for(var i=0;i<6;i++){
     document.getElementById('pb'+i).classList.remove('done');
