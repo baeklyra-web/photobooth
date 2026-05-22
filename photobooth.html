@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>percent cut</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #111;
+  --white: #fafafa;
+  --gray: #888;
+  --light: #efefef;
+  --bg: #f4f4f4;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--black);
+  font-family: 'Noto Sans KR', sans-serif;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+}
+
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+
+/* ─── HOME ─── */
+#screen-intro {
+  justify-content: flex-start;
+  padding: 0;
+  background: #fff;
+}
+.home-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 20px 12px;
+}
+.home-coin {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 16px; font-weight: 700;
+}
+.home-coin-icon { font-size: 22px; }
+.home-topbar-icons { display: flex; gap: 16px; }
+.home-topbar-icons span { font-size: 24px; cursor: pointer; }
+
+.home-banner {
+  width: calc(100% - 32px);
+  margin: 0 16px 0;
+  background: #f5f5f5;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.home-banner-left { display: flex; flex-direction: column; gap: 2px; }
+.home-banner-tag {
+  font-size: 11px; color: #888; font-weight: 400;
+}
+.home-banner-text {
+  font-size: 14px; font-weight: 600; color: #222;
+}
+.home-banner-right { font-size: 22px; }
+.home-banner-close {
+  background: none; border: none; font-size: 18px;
+  color: #aaa; cursor: pointer; padding: 0 0 0 8px;
+  -webkit-appearance: none;
+}
+
+.home-logo-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0 8px;
+  gap: 0;
+}
+.home-logo-frames {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.logo-frame {
+  width: 68px; height: 68px;
+  border: 3px solid #111;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+.logo-frame.hatched {
+  background: repeating-linear-gradient(
+    -45deg, #ccc 0px, #ccc 4px, #fff 4px, #fff 10px
+  );
+}
+.logo-cat {
+  position: absolute;
+  top: -18px; right: -2px;
+  font-size: 20px;
+  transform: rotate(10deg);
+}
+.home-title {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: #111;
+  margin-bottom: 0;
+}
+
+.home-count {
+  font-size: 15px;
+  color: #555;
+  font-weight: 400;
+  letter-spacing: -0.2px;
+  margin-bottom: 0;
+}
+.home-count b { font-weight: 700; color: #111; }
+
+.home-bottom {
+  width: 100%;
+  padding: 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btn-album {
+  width: 100%;
+  padding: 18px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+
+.home-tabbar {
+  width: 100%;
+  display: flex;
+  border-top: 1px solid #eee;
+  padding: 12px 0 28px;
+  margin-top: 8px;
+}
+.tab-item {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  font-size: 11px; color: #aaa; font-weight: 400;
+  cursor: pointer;
+}
+.tab-item.active { color: #111; font-weight: 600; }
+.tab-item .tab-icon {
+  width: 32px; height: 32px;
+  background: transparent;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.tab-item.active .tab-icon {
+  background: #f0f0f0;
+}
+.guide-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 15px;
+  color: #222;
+  line-height: 1.4;
+}
+
+.btn-main {
+  width: 100%;
+  padding: 20px;
+  background: var(--black);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-appearance: none;
+  letter-spacing: -0.3px;
+}
+.btn-main:active { background: #333; }
+
+/* ─── CAMERA ─── */
+#screen-camera {
+  justify-content: flex-start;
+  background: #000;
+  padding: 0;
+}
+#video {
+  width: 100%;
+  max-height: 62vh;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+.cam-bottom {
+  flex: 1;
+  width: 100%;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  padding: 16px 24px 28px;
+  gap: 12px;
+}
+.progress-bar {
+  display: flex; gap: 6px;
+}
+.pbar {
+  height: 3px; width: 36px;
+  background: #444;
+  border-radius: 2px;
+  transition: background 0.3s;
+}
+.pbar.done { background: #fff; }
+.pbar.current { background: #aaa; }
+
+.shutter-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  width: 100%;
+}
+.shot-label {
+  color: #888;
+  font-size: 13px;
+  font-weight: 300;
+  min-width: 48px;
+  text-align: center;
+}
+#btn-shutter {
+  width: 76px; height: 76px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  -webkit-appearance: none;
+}
+#btn-shutter::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.1s;
+}
+#btn-shutter:active::after { transform: scale(0.85); }
+#btn-shutter:disabled { opacity: 0.25; pointer-events: none; }
+
+.timer-select {
+  display: flex; gap: 6px;
+  width: 100%;
+  justify-content: center;
+}
+.timer-btn {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 20px;
+  border: 1.5px solid #444;
+  background: transparent;
+  color: #888;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-appearance: none;
+  transition: all 0.2s;
+}
+.timer-btn.active {
+  background: #fff;
+  border-color: #fff;
+  color: #111;
+  font-weight: 700;
+}
+
+.thumb-strip {
+  display: flex; gap: 6px;
+  width: 100%;
+}
+.thumb-cell {
+  flex: 1;
+  aspect-ratio: 3/4;
+  background: #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.thumb-cell img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.thumb-cell .num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: #555; font-size: 12px;
+}
+.btn-cam-done {
+  width: 100%;
+  padding: 16px;
+  background: #fff;
+  color: #111;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-appearance: none;
+  display: none;
+}
+
+/* countdown overlay */
+.countdown-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  font-size: 120px;
+  font-weight: 900;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 200;
+  transition: opacity 0.15s;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.countdown-overlay.show { opacity: 1; }
+
+/* flash */
+#flash {
+  position: fixed; inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 0.04s;
+}
+#flash.on { opacity: 1; }
+
+/* ─── SELECT ─── */
+#screen-select {
+  background: var(--white);
+  padding: 60px 20px 32px;
+  justify-content: flex-start;
+  gap: 0;
+}
+.select-title {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.select-sub {
+  text-align: center;
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 20px;
+}
+.select-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.sel-cell {
+  aspect-ratio: 3/4;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+.sel-cell img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+
+}
+.sel-cell .check {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  border: 2px solid rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  color: transparent;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.sel-cell.selected { border-color: var(--black); }
+.sel-cell.selected .check {
+  background: var(--black);
+  border-color: var(--black);
+  color: #fff;
+}
+.sel-cell .order-badge {
+  position: absolute;
+  top: 6px; left: 6px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--black);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: none;
+  align-items: center; justify-content: center;
+}
+.sel-cell.selected .order-badge { display: flex; }
+
+/* ─── FRAME/FILTER ─── */
+#screen-frame {
+  background: var(--bg);
+  padding: 60px 0 32px;
+  justify-content: flex-start;
+  gap: 0;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px 20px 10px;
+  letter-spacing: -0.2px;
+}
+.frame-preview {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px 16px;
+}
+.preview-card {
+  position: relative;
+  background: #fff;
+  padding: 10px 10px 36px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  max-width: 260px;
+  width: 100%;
+}
+.preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.preview-grid img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+
+}
+.preview-card .pdate {
+  position: absolute;
+  bottom: 10px; left: 0; right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: #aaa;
+  letter-spacing: 0.08em;
+}
+
+.scroll-row {
+  display: flex;
+  gap: 10px;
+  padding: 0 20px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  scrollbar-width: none;
+}
+.scroll-row::-webkit-scrollbar { display: none; }
+
+.frame-chip {
+  flex-shrink: 0;
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  -webkit-appearance: none;
+}
+.frame-chip.active {
+  background: var(--black);
+  border-color: var(--black);
+  color: #fff;
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  width: 64px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  cursor: pointer;
+}
+.filter-thumb {
+  width: 56px; height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2.5px solid transparent;
+  transition: border-color 0.2s;
+}
+.filter-chip.active .filter-thumb { border-color: var(--black); }
+.filter-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+
+}
+.filter-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+.frame-btn-row {
+  display: flex; gap: 10px;
+  padding: 0 20px;
+  margin-top: auto;
+}
+.frame-btn-row .btn-sub {
+  flex: 1; padding: 16px;
+  border-radius: 12px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; -webkit-appearance: none;
+}
+.frame-btn-row .btn-sub.primary {
+  background: var(--black); color: #fff; border-color: var(--black);
+}
+
+/* ─── QR ─── */
+#screen-qr {
+  background: var(--white);
+  justify-content: center;
+  gap: 28px;
+  padding: 24px;
+}
+.qr-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 24px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  width: 100%; max-width: 320px;
+}
+.qr-head { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+#qr-canvas { border-radius: 8px; }
+.qr-desc { font-size: 13px; color: var(--gray); text-align: center; line-height: 1.6; }
+.qr-btn-row { display: flex; gap: 10px; width: 100%; max-width: 320px; }
+.qr-btn-row .btn-sub {
+  flex: 1; padding: 16px;
+  border-radius: 12px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; -webkit-appearance: none;
+}
+.qr-btn-row .btn-sub.primary {
+  background: var(--black); color: #fff; border-color: var(--black);
+}
+
+/* CSS filters */
+.f-none    { filter: none; }
+.f-bw      { filter: grayscale(100%); }
+.f-warm    { filter: sepia(40%) saturate(120%); }
+.f-cool    { filter: hue-rotate(20deg) saturate(80%); }
+.f-fade    { filter: brightness(110%) contrast(85%) saturate(80%); }
+.f-vivid   { filter: saturate(150%) contrast(110%); }
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+<div class="countdown-overlay" id="countdown"></div>
+
+<!-- ① 홈 -->
+<div class="screen" id="screen-intro">
+  <!-- 상단 바 -->
+  <div class="home-topbar">
+    <div style="font-size:13px;color:#aaa;letter-spacing:0.05em;font-family:'Helvetica Neue',sans-serif;">percent cut</div>
+    <div></div>
+  </div>
+
+  <!-- 배너 -->
+  <div class="home-banner" id="home-banner">
+    <div style="display:flex;gap:12px;align-items:center;">
+      <span style="font-size:22px;">🖼</span>
+      <div class="home-banner-left">
+        <div class="home-banner-tag">이런 기능도 있어요</div>
+        <div class="home-banner-text">QR로 사진과 영상을 바로 받아가요.</div>
+      </div>
+    </div>
+    <button class="home-banner-close" onclick="document.getElementById('home-banner').style.display='none'">✕</button>
+  </div>
+
+  <!-- 로고 영역 -->
+  <div class="home-logo-area">
+    <div class="home-logo-frames">
+      <div class="logo-frame hatched"></div>
+      <div class="logo-frame">🙂</div>
+      <div class="logo-frame hatched"></div>
+      <div class="logo-frame" style="position:relative;">
+        <span>✌️</span>
+        <span class="logo-cat">🐱</span>
+      </div>
+    </div>
+    <div class="home-title">percent cut</div>
+  </div>
+
+  <!-- 하단 버튼 -->
+  <div class="home-bottom">
+    <div class="home-count">생성된 네컷 개수 : <b id="shot-total">0</b></div>
+    <button class="btn-album">앨범에서 선택</button>
+    <button class="btn-main" onclick="showIntro()">촬영하기</button>
+  </div>
+
+
+</div>
+
+<!-- ① 인트로 (찍기 전 안내) -->
+<div class="screen hidden" id="screen-guide">
+  <div style="width:100%;padding:56px 24px 0;flex:1;display:flex;flex-direction:column;justify-content:space-between;padding-bottom:40px;">
+    <div style="text-align:center;font-size:26px;font-weight:700;line-height:1.35;letter-spacing:-0.5px;padding-top:8px;">
+      찍기 전에<br>보고 갈까요?!
+    </div>
+    <div style="width:100%;background:#f4f4f4;border-radius:16px;overflow:hidden;margin:16px 0;">
+      <div class="guide-item">⏱ 6초 타이머 후 바로 촬영돼요.</div>
+      <div class="guide-item">📷 촬영하기를 누르면 6장이 자동으로 찍혀요.</div>
+      <div class="guide-item">🖼 6장 촬영 후 마음에 드는 4장을 골라요.</div>
+      <div class="guide-item">✨ 프레임과 필터는 촬영이 끝난 뒤 선택해요.</div>
+      <div class="guide-item">✕ 뒤로가기로 촬영을 중단할 수 있어요.</div>
+      <div class="guide-item" style="border:none;">⊞ QR로 사진과 영상을 바로 받아가요.</div>
+    </div>
+    <button class="btn-main" onclick="startCamera()">촬영하기</button>
+  </div>
+</div>
+
+<!-- ② 카메라 -->
+<div class="screen hidden" id="screen-camera">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="cam-bottom">
+    <div class="progress-bar" id="progress-bar">
+      <div class="pbar" id="pb0"></div>
+      <div class="pbar" id="pb1"></div>
+      <div class="pbar" id="pb2"></div>
+      <div class="pbar" id="pb3"></div>
+      <div class="pbar" id="pb4"></div>
+      <div class="pbar" id="pb5"></div>
+    </div>
+    <div class="thumb-strip" id="thumb-strip">
+      <div class="thumb-cell" id="tc0"><span class="num">1</span></div>
+      <div class="thumb-cell" id="tc1"><span class="num">2</span></div>
+      <div class="thumb-cell" id="tc2"><span class="num">3</span></div>
+      <div class="thumb-cell" id="tc3"><span class="num">4</span></div>
+      <div class="thumb-cell" id="tc4"><span class="num">5</span></div>
+      <div class="thumb-cell" id="tc5"><span class="num">6</span></div>
+    </div>
+    <div class="timer-select" id="timer-select">
+      <button class="timer-btn active" id="tbtn-0"  >바로</button>
+      <button class="timer-btn"        id="tbtn-5"  >5초</button>
+      <button class="timer-btn"        id="tbtn-10" >10초</button>
+      <button class="timer-btn"        id="tbtn-15" >15초</button>
+      <button class="timer-btn"        id="tbtn-20" >20초</button>
+    </div>
+    <div class="shutter-area">
+      <span class="shot-label" id="shot-label">0 / 6</span>
+      <button id="btn-shutter"></button>
+      <button id="btn-flip" onclick="flipCamera()" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:transparent;color:#fff;font-size:20px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;">🔄</button>
+    </div>
+    <button class="btn-cam-done" id="btn-cam-done">4장 고르기 →</button>
+  </div>
+</div>
+
+<!-- ③ 사진 선택 -->
+<div class="screen hidden" id="screen-select">
+  <div class="select-title">마음에 드는 4장을 골라요</div>
+  <div class="select-sub" id="select-sub">0 / 4 선택됨</div>
+  <div class="select-grid" id="select-grid"></div>
+  <button class="btn-main" id="btn-select-done" onclick="showFrame()" style="width:100%;opacity:0.3;pointer-events:none;">다음 →</button>
+</div>
+
+<!-- ④ 프레임 & 필터 -->
+<div class="screen hidden" id="screen-frame">
+  <div class="section-title">프레임 선택</div>
+  <div class="frame-preview">
+    <div class="preview-card" id="preview-card">
+      <div class="preview-grid" id="preview-grid-imgs"></div>
+      <div class="pdate" id="pdate"></div>
+    </div>
+  </div>
+
+  <div class="scroll-row" id="frame-chips"></div>
+
+  <div class="section-title">필터 선택</div>
+  <div class="scroll-row" id="filter-chips"></div>
+
+  <div class="frame-btn-row" style="width:100%;margin-top:16px;">
+    <button class="btn-sub" onclick="showSelect()">← 다시 고르기</button>
+    <button class="btn-sub primary" onclick="showQR()">QR 받기 →</button>
+  </div>
+</div>
+
+<!-- ⑤ QR -->
+<div class="screen hidden" id="screen-qr">
+  <div class="qr-card">
+    <div class="qr-head">📱 QR 스캔</div>
+    <canvas id="qr-canvas" width="220" height="220"></canvas>
+    <div class="qr-desc">폰 카메라로 스캔하면<br>사진이 바로 열려요.<br>길게 눌러서 저장하세요!</div>
+  </div>
+  <div class="qr-btn-row">
+    <button class="btn-sub" onclick="switchScreen('screen-frame')">← 돌아가기</button>
+    <button class="btn-sub" onclick="restartAll()">홈으로</button>
+    <button class="btn-sub primary" onclick="restartAll(); startCamera()">새로 찍기</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ── STATE ──
+var allShots = [];      // 6장 dataURL
+var selected = [];      // 선택된 4장 인덱스 순서대로
+var currentFilter = 'none';
+var currentFrame = 'percent';
+var shotIndex = 0;
+var isShooting = false;
+var stream = null;
+
+var video = document.getElementById('video');
+var countdown = document.getElementById('countdown');
+var flash = document.getElementById('flash');
+
+var FILTERS = [
+  { id:'none',  label:'원본',  css:'' },
+  { id:'bw',    label:'흑백',  css:'grayscale(100%)' },
+  { id:'warm',  label:'웜톤',  css:'sepia(40%) saturate(120%)' },
+  { id:'cool',  label:'쿨톤',  css:'hue-rotate(20deg) saturate(80%)' },
+  { id:'fade',  label:'페이드', css:'brightness(110%) contrast(85%) saturate(80%)' },
+  { id:'vivid', label:'선명',  css:'saturate(150%) contrast(110%)' },
+];
+
+var FRAMES = [
+  { id:'percent', label:'% Partyroom' },
+  { id:'white',   label:'화이트' },
+  { id:'black',   label:'블랙' },
+  { id:'film',    label:'필름' },
+];
+
+// ── CAMERA ──
+function startCamera() {
+  switchScreen('screen-camera');
+  if (stream) return;
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: facingMode, width:{ideal:640}, height:{ideal:853} },
+    audio: false
+  }).then(function(s) {
+    stream = s;
+    video.srcObject = s;
+    video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+    video.play();
+  }).catch(function() {
+    alert('카메라 접근을 허용해 주세요.\n설정 > Safari > 카메라');
+  });
+}
+
+var currentTimer = 0;
+var facingMode = 'user'; // 'user'=전면, 'environment'=후면
+
+function setTimer(sec) {
+  currentTimer = sec;
+  [0,5,10,15,20].forEach(function(s) {
+    var btn = document.getElementById('tbtn-'+s);
+    if (btn) btn.classList.toggle('active', s === sec);
+  });
+  document.getElementById('timer-display').textContent = sec === 0 ? '바로' : sec+'초';
+}
+
+function flipCamera() {
+  if (isShooting) return;
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  if (stream) {
+    stream.getTracks().forEach(function(t){ t.stop(); });
+    stream = null;
+  }
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: facingMode, width:{ideal:640}, height:{ideal:853} },
+    audio: false
+  }).then(function(s) {
+    stream = s;
+    video.srcObject = s;
+    video.play();
+    // 전면이면 미러, 후면이면 정방향
+    video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+  }).catch(function() {
+    alert('카메라 전환에 실패했어요.');
+    facingMode = facingMode === 'user' ? 'environment' : 'user';
+  });
+}
+
+function startShot() {
+  if (isShooting || shotIndex >= 6) return;
+  isShooting = true;
+  document.getElementById('btn-shutter').disabled = true;
+  document.getElementById('timer-select').style.pointerEvents = 'none';
+  runCountdownThenShoot();
+}
+
+function runCountdownThenShoot() {
+  if (currentTimer === 0) {
+    // 바로 촬영
+    captureFrame();
+    return;
+  }
+  var count = currentTimer;
+  countdown.textContent = count;
+  countdown.classList.add('show');
+  var t = setInterval(function() {
+    count--;
+    if (count > 0) {
+      countdown.textContent = count;
+    } else {
+      clearInterval(t);
+      countdown.classList.remove('show');
+      captureFrame();
+    }
+  }, 1000);
+}
+
+function captureFrame() {
+  flash.classList.add('on');
+  setTimeout(function(){ flash.classList.remove('on'); }, 100);
+
+  var oc2 = document.createElement('canvas');
+  oc2.width = video.videoWidth || 640;
+  oc2.height = video.videoHeight || 853;
+  var ctx2 = oc2.getContext('2d');
+  if (facingMode === 'user') {
+    ctx2.translate(oc2.width, 0);
+    ctx2.scale(-1, 1);
+  }
+  ctx2.drawImage(video, 0, 0);
+  var url = oc2.toDataURL('image/jpeg', 0.85);
+  allShots.push(url);
+
+  // thumb
+  var cell = document.getElementById('tc' + shotIndex);
+  cell.innerHTML = '';
+  var img = document.createElement('img');
+  img.src = url;
+  cell.appendChild(img);
+
+  // progress
+  document.getElementById('pb' + shotIndex).classList.add('done');
+  shotIndex++;
+  document.getElementById('shot-label').textContent = shotIndex + ' / 6';
+
+  if (shotIndex >= 6) {
+    isShooting = false;
+    document.getElementById('timer-select').style.pointerEvents = 'auto';
+    document.getElementById('btn-cam-done').style.display = 'block';
+  } else {
+    setTimeout(function() {
+      runCountdownThenShoot();
+    }, currentTimer === 0 ? 300 : 600);
+  }
+}
+
+// ── SELECT ──
+function showSelect() {
+  switchScreen('screen-select');
+  selected = [];
+  var grid = document.getElementById('select-grid');
+  grid.innerHTML = '';
+  allShots.forEach(function(src, i) {
+    var cell = document.createElement('div');
+    cell.className = 'sel-cell';
+    cell.id = 'sc' + i;
+    var img = document.createElement('img');
+    img.src = src;
+    var check = document.createElement('div');
+    check.className = 'check';
+    check.textContent = '✓';
+    var badge = document.createElement('div');
+    badge.className = 'order-badge';
+    badge.id = 'ob' + i;
+    cell.appendChild(img);
+    cell.appendChild(check);
+    cell.appendChild(badge);
+    cell.onclick = function(){ toggleSelect(i); };
+    grid.appendChild(cell);
+  });
+  updateSelectUI();
+}
+
+function toggleSelect(i) {
+  var idx = selected.indexOf(i);
+  if (idx >= 0) {
+    selected.splice(idx, 1);
+  } else {
+    if (selected.length >= 4) return;
+    selected.push(i);
+  }
+  updateSelectUI();
+}
+
+function updateSelectUI() {
+  allShots.forEach(function(_, i) {
+    var cell = document.getElementById('sc' + i);
+    var badge = document.getElementById('ob' + i);
+    var pos = selected.indexOf(i);
+    if (pos >= 0) {
+      cell.classList.add('selected');
+      badge.textContent = pos + 1;
+    } else {
+      cell.classList.remove('selected');
+      badge.textContent = '';
+    }
+  });
+  document.getElementById('select-sub').textContent = selected.length + ' / 4 선택됨';
+  var done = document.getElementById('btn-select-done');
+  if (selected.length === 4) {
+    done.style.opacity = '1';
+    done.style.pointerEvents = 'auto';
+  } else {
+    done.style.opacity = '0.3';
+    done.style.pointerEvents = 'none';
+  }
+}
+
+// ── FRAME / FILTER ──
+function showFrame() {
+  switchScreen('screen-frame');
+
+  // date
+  var now = new Date();
+  document.getElementById('pdate').textContent =
+    now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0') + '.' + String(now.getDate()).padStart(2,'0');
+
+  buildFrameChips();
+  buildFilterChips();
+  applyPreview();
+}
+
+function buildFrameChips() {
+  var el = document.getElementById('frame-chips');
+  el.innerHTML = '';
+  FRAMES.forEach(function(f) {
+    var btn = document.createElement('button');
+    btn.className = 'frame-chip' + (f.id === currentFrame ? ' active' : '');
+    btn.textContent = f.label;
+    btn.onclick = function() {
+      currentFrame = f.id;
+      el.querySelectorAll('.frame-chip').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      applyPreview();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function buildFilterChips() {
+  var el = document.getElementById('filter-chips');
+  el.innerHTML = '';
+  FILTERS.forEach(function(f) {
+    var chip = document.createElement('div');
+    chip.className = 'filter-chip' + (f.id === currentFilter ? ' active' : '');
+    var thumb = document.createElement('div');
+    thumb.className = 'filter-thumb';
+    var img = document.createElement('img');
+    img.src = allShots[selected[0]];
+    img.style.filter = f.css;
+    thumb.appendChild(img);
+    var lbl = document.createElement('div');
+    lbl.className = 'filter-label';
+    lbl.textContent = f.label;
+    chip.appendChild(thumb);
+    chip.appendChild(lbl);
+    chip.onclick = function() {
+      currentFilter = f.id;
+      el.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+      chip.classList.add('active');
+      applyPreview();
+    };
+    el.appendChild(chip);
+  });
+}
+
+function getFilterCSS() {
+  for (var i=0;i<FILTERS.length;i++) { if (FILTERS[i].id === currentFilter) return FILTERS[i].css; }
+  return '';
+}
+
+function applyPreview() {
+  var card = document.getElementById('preview-card');
+  var grid = document.getElementById('preview-grid-imgs');
+  grid.innerHTML = '';
+
+  var isPercent = currentFrame === 'percent';
+  var isBlack   = currentFrame === 'black';
+
+  var configs = {
+    percent: { bg:'#fffaf7', pad:'10px', bottomPad:'52px', cols:'1fr' },
+    white:   { bg:'#ffffff', pad:'10px', bottomPad:'48px', cols:'1fr 1fr' },
+    black:   { bg:'#0f0f0f', pad:'10px', bottomPad:'48px', cols:'1fr 1fr' },
+    film:    { bg:'#f5f0e8', pad:'10px', bottomPad:'48px', cols:'1fr 1fr' },
+  };
+  var cfg = configs[currentFrame] || configs.white;
+  card.style.background = cfg.bg;
+  card.style.padding = cfg.pad + ' ' + cfg.pad + ' ' + cfg.bottomPad;
+  grid.style.gridTemplateColumns = cfg.cols;
+
+  var fCSS = getFilterCSS();
+  selected.forEach(function(si) {
+    var img = document.createElement('img');
+    img.src = allShots[si];
+    img.style.filter = fCSS;
+    grid.appendChild(img);
+  });
+
+  var dateEl = document.getElementById('pdate');
+  var rg = '#c9956a';
+  var textColor = isBlack ? '#888' : rg;
+
+  if (isPercent) {
+    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;font-size:9px;font-weight:400;letter-spacing:3px;color:'+rg+';text-transform:uppercase;';
+    dateEl.innerHTML = '<span style="font-size:11px;font-style:italic;font-weight:600;letter-spacing:1px;font-family:Georgia,serif;">Percent</span>&nbsp;&nbsp;<span style="letter-spacing:4px;">PARTYROOM</span>';
+  } else {
+    var now = new Date();
+    var dateStr = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
+    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:'+textColor+';';
+    dateEl.innerHTML = '<span style="font-size:10px;font-style:italic;font-weight:600;letter-spacing:1px;font-family:Georgia,serif;">Percent</span>&nbsp;&nbsp;<span style="letter-spacing:4px;">PARTYROOM</span><br><span style="font-size:7px;letter-spacing:2px;opacity:0.6;">'+dateStr+'</span>';
+  }
+}
+
+// ── QR ──
+function showQR() {
+  switchScreen('screen-qr');
+  buildCompositeAndQR();
+}
+
+function buildCompositeAndQR() {
+  var fCSS = getFilterCSS();
+  var isPercent = currentFrame === 'percent';
+  var isBlack   = currentFrame === 'black';
+
+  var cw, ch, padX, padTop, padBottom, gap, cellW, cellH, cols;
+
+  if (isPercent) {
+    cols = 1;
+    cw = 380; padX = 20; padTop = 88; padBottom = 88; gap = 5;
+    cellW = cw - padX*2;
+    cellH = Math.round(cellW * 4/3);
+    ch = padTop + padBottom + 4*cellH + 3*gap;
+  } else {
+    cols = 2;
+    cw = 500; padX = 18; padBottom = 68; gap = 5;
+    padTop = 18;
+    cellW = Math.round((cw - padX*2 - gap) / 2);
+    cellH = Math.round(cellW * 4/3);
+    ch = padTop + padBottom + 2*cellH + gap;
+  }
+
+  var canvas = document.createElement('canvas');
+  canvas.width = cw; canvas.height = ch;
+  var ctx = canvas.getContext('2d');
+
+  var bgMap = { percent:'#fffaf7', white:'#ffffff', black:'#0f0f0f', film:'#f5f0e8' };
+  ctx.fillStyle = bgMap[currentFrame] || '#fff';
+  ctx.fillRect(0,0,cw,ch);
+
+  // 프레임 상단 장식
+  drawFrameTop(ctx, cw, isPercent, isBlack);
+
+  var loaded = 0;
+  selected.forEach(function(si, i) {
+    var img = new Image();
+    img.onload = function() {
+      var col = cols===1 ? 0 : i%2;
+      var row = cols===1 ? i : Math.floor(i/2);
+      var x = padX + col*(cellW+gap);
+      var y = padTop + row*(cellH+gap);
+
+      var oc = document.createElement('canvas');
+      oc.width = cellW; oc.height = cellH;
+      var octx = oc.getContext('2d');
+      octx.drawImage(img,0,0,cellW,cellH);
+
+      ctx.save();
+      if (fCSS) ctx.filter = fCSS;
+      ctx.drawImage(oc, x, y);
+      ctx.restore();
+
+      loaded++;
+      if (loaded === 4) {
+        drawFrameBottom(ctx, cw, ch, isPercent, isBlack);
+        var dataURL = canvas.toDataURL('image/jpeg', 0.85);
+        renderQR(dataURL);
+      }
+    };
+    img.src = allShots[si];
+  });
+}
+
+function drawFrameTop(ctx, cw, isPercent, isBlack) {
+  var rg = '#c9956a';
+  var lineColor = isBlack ? '#333' : '#e0c4a8';
+  ctx.textAlign = 'center';
+
+  if (isPercent) {
+    // 점 장식
+    drawDots(ctx, cw, 18, isBlack);
+    // 이탤릭 + 스페이싱 조합
+    ctx.font = 'italic 600 22px Georgia, serif';
+    ctx.fillStyle = rg;
+    ctx.fillText('Percent', cw/2 - 28, 54);
+    ctx.font = '300 11px "Helvetica Neue", Arial, sans-serif';
+    ctx.letterSpacing = '6px';
+    ctx.fillStyle = rg;
+    ctx.fillText('PARTYROOM', cw/2 + 30, 54);
+    ctx.letterSpacing = '0px';
+    // 얇은 라인
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(20, 64); ctx.lineTo(cw-20, 64); ctx.stroke();
+  } else {
+    // 상단 라인
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(18, 10); ctx.lineTo(cw-18, 10); ctx.stroke();
+  }
+}
+
+function drawFrameBottom(ctx, cw, ch, isPercent, isBlack) {
+  var rg = '#c9956a';
+  var lineColor = isBlack ? '#333' : '#e0c4a8';
+  var subColor  = isBlack ? '#555' : '#bbb';
+  ctx.textAlign = 'center';
+
+  if (isPercent) {
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(20, ch-68); ctx.lineTo(cw-68, ch-68); ctx.stroke();
+    // 점 장식
+    drawDots(ctx, cw, ch-20, isBlack);
+    // 하단 레터링
+    ctx.font = 'italic 600 22px Georgia, serif';
+    ctx.fillStyle = rg;
+    ctx.fillText('Percent', cw/2 - 28, ch-34);
+    ctx.font = '300 11px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillStyle = rg;
+    ctx.fillText('PARTYROOM', cw/2 + 30, ch-34);
+  } else {
+    // 하단 라인
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.moveTo(18, ch-52); ctx.lineTo(cw-18, ch-52); ctx.stroke();
+    // 레터링
+    ctx.font = 'italic 600 18px Georgia, serif';
+    ctx.fillStyle = rg;
+    ctx.fillText('Percent', cw/2 - 22, ch-26);
+    ctx.font = '300 9px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillStyle = rg;
+    ctx.fillText('PARTYROOM', cw/2 + 28, ch-26);
+    // 날짜
+    var now = new Date();
+    var ds = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
+    ctx.font = '300 9px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillStyle = subColor;
+    ctx.fillText(ds, cw/2, ch-10);
+  }
+}
+
+function drawDots(ctx, cw, cy, isBlack) {
+  var colors = isBlack ? ['#3a2a1a','#2a1a0a','#4a3020'] : ['#e8c4a8','#d4b090','#f0d0b8'];
+  var pts = [
+    {x:14,r:2.5},{x:26,r:1.5},{x:cw-14,r:2.5},{x:cw-26,r:1.5},
+    {x:38,r:1},{x:cw-38,r:1}
+  ];
+  pts.forEach(function(p,i){ ctx.beginPath(); ctx.arc(p.x,cy,p.r,0,Math.PI*2); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); });
+}
+
+function renderQR(dataURL) {
+  var qrCanvas = document.getElementById('qr-canvas');
+  var ctx = qrCanvas.getContext('2d');
+  ctx.clearRect(0,0,220,220);
+
+  try {
+    var div = document.createElement('div');
+    new QRCode(div, {
+      text: dataURL,
+      width: 220, height: 220,
+      colorDark: '#111',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
+    });
+    setTimeout(function() {
+      var src = null;
+      var el = div.querySelector('canvas');
+      if (el) src = el.toDataURL();
+      else { el = div.querySelector('img'); if(el) src = el.src; }
+      if (src) {
+        var qi = new Image();
+        qi.onload = function(){ ctx.drawImage(qi,0,0,220,220); };
+        qi.src = src;
+      }
+    }, 300);
+  } catch(e) {
+    ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
+    ctx.fillStyle='#555'; ctx.font='14px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('데이터가 너무 커요',110,100);
+    ctx.fillText('해상도를 낮춰 재시도하세요',110,125);
+  }
+}
+
+function showIntro() {
+  switchScreen('screen-guide');
+}
+
+// ── RESTART ──
+function restartAll() {
+  allShots=[]; selected=[]; shotIndex=0; isShooting=false;
+  currentFilter='none'; currentFrame='percent'; currentTimer=0;
+  setTimer(0);
+  for(var i=0;i<6;i++){
+    document.getElementById('pb'+i).classList.remove('done');
+    var cell=document.getElementById('tc'+i);
+    cell.innerHTML='<span class="num">'+(i+1)+'</span>';
+  }
+  document.getElementById('shot-label').textContent='0 / 6';
+  document.getElementById('btn-shutter').disabled=false;
+  document.getElementById('btn-cam-done').style.display='none';
+  switchScreen('screen-intro');
+}
+
+// ── SWITCH ──
+function switchScreen(id) {
+  ['screen-intro','screen-guide','screen-camera','screen-select','screen-frame','screen-qr'].forEach(function(s){
+    document.getElementById(s).classList.add('hidden');
+  });
+  document.getElementById(id).classList.remove('hidden');
+}
+</script>
+</body>
+</html>
