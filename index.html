@@ -1231,15 +1231,12 @@ function renderQR(dataURL) {
   ctx.textAlign = 'center';
   ctx.fillText('업로드 중...', 110, 115);
 
-  // base64에서 헤더 제거
   var base64 = dataURL.split(',')[1];
-
-  var formData = new FormData();
-  formData.append('key', '12128642b5dd947f967c34e8f15a4162');
-  formData.append('image', base64);
+  var apiKey = '12128642b5dd947f967c34e8f15a4162';
 
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.imgbb.com/1/upload', true);
+  xhr.open('POST', 'https://api.imgbb.com/1/upload?key=' + apiKey, true);
+  xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
   xhr.onload = function() {
     ctx.clearRect(0,0,220,220);
     if (xhr.status === 200) {
@@ -1273,7 +1270,7 @@ function renderQR(dataURL) {
     ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
     ctx.fillText('연결 오류', 110, 110);
   };
-  xhr.send(formData);
+  xhr.send('image=' + encodeURIComponent(base64));
 }
 
 function showIntro() {
