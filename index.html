@@ -323,13 +323,14 @@ html, body {
 
 /* countdown overlay */
 .countdown-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  top: 56px;
+  left: 0; right: 0;
   display: flex; align-items: center; justify-content: center;
-  font-weight: 900;
-  color: #111;
+  color: #fff;
   opacity: 0;
   pointer-events: none;
-  z-index: 200;
+  z-index: 300;
   transition: opacity 0.15s;
   font-family: 'Noto Sans KR', sans-serif;
 }
@@ -606,6 +607,14 @@ html, body {
 <body>
 
 <div id="flash"></div>
+
+<!-- 카운트다운 (항상 최상위) -->
+<div class="countdown-overlay" id="countdown">
+  <div style="background:rgba(0,0,0,0.45);border-radius:20px;padding:6px 20px;display:flex;align-items:center;gap:8px;">
+    <span style="font-size:13px;font-weight:400;opacity:0.85;letter-spacing:1px;">남은 시간</span>
+    <span id="countdown-num" style="font-size:22px;font-weight:700;line-height:1;">-</span>
+  </div>
+</div>
 <div class="countdown-overlay" id="countdown"></div>
 
 <!-- ① 홈 -->
@@ -675,14 +684,6 @@ html, body {
   <!-- 상단: 뒤로가기 -->
   <div style="position:absolute;top:0;left:0;right:0;z-index:50;padding:52px 20px 0;display:flex;align-items:center;">
     <button id="btn-cam-back" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;-webkit-appearance:none;padding:8px;line-height:1;">‹</button>
-  </div>
-
-  <!-- 카운트다운 중앙 -->
-  <div class="countdown-overlay" id="countdown">
-    <div style="text-align:center;">
-      <div style="font-size:18px;font-weight:400;margin-bottom:4px;opacity:0.85;">남은 시간</div>
-      <div id="countdown-num" style="font-size:120px;font-weight:700;line-height:1;">-</div>
-    </div>
   </div>
 
   <!-- 하단 컨트롤 -->
@@ -780,7 +781,6 @@ var videoBlob = null;
 var videoQRDone = false;
 
 var video = document.getElementById('video');
-var countdown = document.getElementById('countdown');
 var flash = document.getElementById('flash');
 
 var FILTERS = [
@@ -873,16 +873,17 @@ function runCountdownThenShoot() {
     return;
   }
   var count = currentTimer;
+  var cdEl = document.getElementById('countdown');
   var numEl = document.getElementById('countdown-num');
   if (numEl) numEl.textContent = count;
-  countdown.classList.add('show');
+  if (cdEl) cdEl.classList.add('show');
   var t = setInterval(function() {
     count--;
     if (count > 0) {
       if (numEl) numEl.textContent = count;
     } else {
       clearInterval(t);
-      countdown.classList.remove('show');
+      if (cdEl) cdEl.classList.remove('show');
       captureFrame();
     }
   }, 1000);
@@ -1106,8 +1107,8 @@ function uploadVideoQR() {
 }
 
 function stopShooting() {
-  // 카운트다운 숨기기
-  countdown.classList.remove('show');
+  var cdEl = document.getElementById('countdown');
+  if (cdEl) cdEl.classList.remove('show');
   isShooting = false;
   // 녹화 중단
   if (mediaRecorder && mediaRecorder.state === 'recording') {
