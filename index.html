@@ -595,6 +595,7 @@ html, body {
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 15px; font-weight: 500;
   cursor: pointer; -webkit-appearance: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
 }
 .qr-btn-row .btn-sub.primary {
   background: var(--black); color: #fff; border-color: var(--black);
@@ -1312,9 +1313,10 @@ function bindBtn(id, fn) {
   var fired = false;
   function handler(e) {
     e.preventDefault();
+    e.stopPropagation();
     if (fired) return;
     fired = true;
-    setTimeout(function(){ fired = false; }, 500);
+    setTimeout(function(){ fired = false; }, 1000);
     fn();
   }
   el.addEventListener('touchend', handler, {passive: false});
@@ -1333,9 +1335,11 @@ window.addEventListener('load', function() {
   bindBtn('btn-go-qr',        function(){ showQR(); });
   bindBtn('btn-qr-back',      function(){ switchScreen('screen-frame'); });
   bindBtn('btn-qr-home',      function(){ restartAll(); });
-  bindBtn('btn-qr-new',       function(){ restartAll(); startCamera(); });
+  bindBtn('btn-qr-new',       function(){
+    restartAll();
+    setTimeout(function(){ startCamera(); }, 300);
+  });
 
-  // 타이머 버튼
   [0,5,10,15,20].forEach(function(s){
     bindBtn('tbtn-'+s, function(){ setTimer(s); });
   });
