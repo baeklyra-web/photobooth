@@ -1224,7 +1224,6 @@ function renderQR(dataURL) {
   var ctx = qrCanvas.getContext('2d');
   ctx.clearRect(0,0,220,220);
 
-  // 로딩 표시
   ctx.fillStyle = '#f4f4f4';
   ctx.fillRect(0,0,220,220);
   ctx.fillStyle = '#999';
@@ -1232,30 +1231,20 @@ function renderQR(dataURL) {
   ctx.textAlign = 'center';
   ctx.fillText('업로드 중...', 110, 115);
 
-  // Cloudinary 업로드
   var cloudName = 'dyppqgbhm';
   var uploadPreset = 'percentcut';
 
-  // base64 → Blob
-  var byteStr = atob(dataURL.split(',')[1]);
-  var mime = 'image/jpeg';
-  var ab = new ArrayBuffer(byteStr.length);
-  var ia = new Uint8Array(ab);
-  for (var i=0; i<byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
-  var blob = new Blob([ab], {type: mime});
-
   var formData = new FormData();
-  formData.append('file', blob, 'percentcut.jpg');
+  formData.append('file', dataURL);
   formData.append('upload_preset', uploadPreset);
 
   var xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + cloudName + '/image/upload', true);
   xhr.onload = function() {
+    ctx.clearRect(0,0,220,220);
     if (xhr.status === 200) {
       var res = JSON.parse(xhr.responseText);
       var imageUrl = res.secure_url;
-      // URL로 QR 생성
-      ctx.clearRect(0,0,220,220);
       var div = document.createElement('div');
       new QRCode(div, {
         text: imageUrl,
@@ -1276,14 +1265,14 @@ function renderQR(dataURL) {
     } else {
       ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
       ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
-      ctx.fillText('업로드 실패 😢', 110, 100);
-      ctx.fillText('인터넷 연결을 확인해주세요', 110, 125);
+      ctx.fillText('업로드 실패 ('+xhr.status+')', 110, 100);
+      ctx.fillText(xhr.responseText.substring(0,40), 110, 125);
     }
   };
   xhr.onerror = function() {
     ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
     ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
-    ctx.fillText('연결 오류 😢', 110, 110);
+    ctx.fillText('연결 오류', 110, 110);
   };
   xhr.send(formData);
 }
@@ -1296,6 +1285,7 @@ function showIntro() {
 function restartAll() {
   allShots=[]; selected=[]; shotIndex=0; isShooting=false;
   currentFilter='none'; currentFrame='percent'; currentTimer=0;
+  facingMode='user';
   setTimer(0);
   for(var i=0;i<6;i++){
     document.getElementById('pb'+i).classList.remove('done');
@@ -1305,6 +1295,8 @@ function restartAll() {
   document.getElementById('shot-label').textContent='0 / 6';
   document.getElementById('btn-shutter').disabled=false;
   document.getElementById('btn-cam-done').style.display='none';
+  document.getElementById('timer-select').style.pointerEvents='auto';
+  if(stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
   switchScreen('screen-intro');
 }
 
