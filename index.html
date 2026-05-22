@@ -570,9 +570,21 @@ html, body {
 /* ─── QR ─── */
 #screen-qr {
   background: var(--white);
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.qr-inner {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 28px;
-  padding: 24px;
+  gap: 20px;
+  padding: 40px 24px 40px;
 }
 .qr-card {
   background: #fff;
@@ -586,16 +598,20 @@ html, body {
 .qr-head { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
 #qr-canvas { border-radius: 8px; }
 .qr-desc { font-size: 13px; color: var(--gray); text-align: center; line-height: 1.6; }
-.qr-btn-row { display: flex; gap: 10px; width: 100%; max-width: 320px; }
+.qr-btn-row {
+  display: flex; gap: 10px;
+  width: 100%; max-width: 320px;
+}
 .qr-btn-row .btn-sub {
   flex: 1; padding: 16px;
   border-radius: 12px;
   border: 1.5px solid #ddd;
   background: #fff;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 15px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   cursor: pointer; -webkit-appearance: none;
-  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+  -webkit-tap-highlight-color: rgba(0,0,0,0.15);
+  min-height: 52px;
 }
 .qr-btn-row .btn-sub.primary {
   background: var(--black); color: #fff; border-color: var(--black);
@@ -651,8 +667,6 @@ html, body {
 
   <!-- 하단 버튼 -->
   <div class="home-bottom">
-    <div class="home-count">생성된 네컷 개수 : <b id="shot-total">0</b></div>
-    <button class="btn-album">앨범에서 선택</button>
     <button class="btn-main" id="btn-go-intro">촬영하기</button>
   </div>
 
@@ -744,28 +758,39 @@ html, body {
 
 <!-- ⑤ QR -->
 <div class="screen hidden" id="screen-qr">
-  <div class="qr-card">
-    <div class="qr-head">📱 QR 스캔</div>
-    <canvas id="qr-canvas" width="220" height="220"></canvas>
-    <div class="qr-desc">폰 카메라로 스캔하면<br>사진이 바로 열려요.<br>길게 눌러서 저장하세요!</div>
-  </div>
-  <div class="qr-btn-row">
-    <button class="btn-sub" id="btn-qr-back">← 돌아가기</button>
-    <button class="btn-sub" id="btn-qr-home">홈으로</button>
-    <button class="btn-sub primary" id="btn-qr-new">새로 찍기</button>
+  <div class="qr-inner">
+    <div class="qr-card">
+      <div class="qr-head">📸 사진 QR</div>
+      <canvas id="qr-canvas" width="220" height="220"></canvas>
+      <div class="qr-desc">폰 카메라로 스캔하면<br>사진이 바로 열려요.<br>길게 눌러서 저장하세요!</div>
+    </div>
+    <div class="qr-card" id="video-qr-card">
+      <div class="qr-head">🎬 영상 QR</div>
+      <canvas id="qr-video-canvas" width="220" height="220"></canvas>
+      <div class="qr-desc">영상도 QR로 받아가세요!</div>
+    </div>
+    <div class="qr-btn-row">
+      <button class="btn-sub" id="btn-qr-back">← 돌아가기</button>
+      <button class="btn-sub" id="btn-qr-home">홈으로</button>
+      <button class="btn-sub primary" id="btn-qr-new">새로 찍기</button>
+    </div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ── STATE ──
-var allShots = [];      // 6장 dataURL
-var selected = [];      // 선택된 4장 인덱스 순서대로
+var allShots = [];
+var selected = [];
 var currentFilter = 'none';
 var currentFrame = 'percent';
 var shotIndex = 0;
 var isShooting = false;
 var stream = null;
+var mediaRecorder = null;
+var recordedChunks = [];
+var videoBlob = null;
+var videoQRDone = false;
 
 var video = document.getElementById('video');
 var countdown = document.getElementById('countdown');
@@ -843,6 +868,36 @@ function startShot() {
   isShooting = true;
   document.getElementById('btn-shutter').disabled = true;
   document.getElementById('timer-select').style.pointerEvents = 'none';
+
+  // 영상 녹화 시작
+  recordedChunks = [];
+  videoBlob = null;
+  videoQRDone = false;
+  try {
+    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8'
+                 : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm'
+                 : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
+    var options = mimeType ? { mimeType: mimeType } : {};
+    mediaRecorder = new MediaRecorder(stream, options);
+    mediaRecorder.ondataavailable = function(e) {
+      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+    mediaRecorder.onstop = function() {
+      var mime = mediaRecorder.mimeType || 'video/webm';
+      videoBlob = new Blob(recordedChunks, { type: mime });
+      uploadVideoQR();
+    };
+    mediaRecorder.start();
+    // 10초 후 자동 중단
+    setTimeout(function() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }, 10000);
+  } catch(e) {
+    mediaRecorder = null;
+  }
+
   runCountdownThenShoot();
 }
 
@@ -1076,7 +1131,69 @@ function applyPreview() {
 // ── QR ──
 function showQR() {
   switchScreen('screen-qr');
+  // 영상 QR 카드 초기화
+  var vctx = document.getElementById('qr-video-canvas').getContext('2d');
+  vctx.fillStyle = '#f4f4f4';
+  vctx.fillRect(0,0,220,220);
+  vctx.fillStyle = '#999';
+  vctx.font = '13px sans-serif';
+  vctx.textAlign = 'center';
+  vctx.fillText('영상 처리 중...', 110, 115);
   buildCompositeAndQR();
+}
+
+function uploadVideoQR() {
+  if (!videoBlob) return;
+  var vctx = document.getElementById('qr-video-canvas').getContext('2d');
+  vctx.fillStyle = '#f4f4f4';
+  vctx.fillRect(0,0,220,220);
+  vctx.fillStyle = '#999';
+  vctx.font = '13px sans-serif';
+  vctx.textAlign = 'center';
+  vctx.fillText('영상 업로드 중...', 110, 115);
+
+  var reader = new FileReader();
+  reader.onload = function() {
+    var base64 = reader.result.split(',')[1];
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://api.imgbb.com/1/upload?key=12128642b5dd947f967c34e8f15a4162', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onload = function() {
+      vctx.clearRect(0,0,220,220);
+      if (xhr.status === 200) {
+        var res = JSON.parse(xhr.responseText);
+        var videoUrl = res.data.url;
+        var div = document.createElement('div');
+        new QRCode(div, {
+          text: videoUrl,
+          width: 220, height: 220,
+          colorDark: '#111',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        setTimeout(function() {
+          var el = div.querySelector('canvas') || div.querySelector('img');
+          if (el) {
+            var src = el.tagName==='CANVAS' ? el.toDataURL() : el.src;
+            var qi = new Image();
+            qi.onload = function(){ vctx.drawImage(qi,0,0,220,220); };
+            qi.src = src;
+          }
+        }, 300);
+      } else {
+        vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
+        vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
+        vctx.fillText('영상 업로드 실패', 110, 110);
+      }
+    };
+    xhr.onerror = function() {
+      vctx.fillStyle='#eee'; vctx.fillRect(0,0,220,220);
+      vctx.fillStyle='#e55'; vctx.font='13px sans-serif'; vctx.textAlign='center';
+      vctx.fillText('연결 오류', 110, 110);
+    };
+    xhr.send('image=' + encodeURIComponent(base64));
+  };
+  reader.readAsDataURL(videoBlob);
 }
 
 function buildCompositeAndQR() {
@@ -1283,6 +1400,9 @@ function restartAll() {
   allShots=[]; selected=[]; shotIndex=0; isShooting=false;
   currentFilter='none'; currentFrame='percent'; currentTimer=0;
   facingMode='user';
+  recordedChunks=[]; videoBlob=null; videoQRDone=false;
+  if(mediaRecorder && mediaRecorder.state==='recording') mediaRecorder.stop();
+  mediaRecorder=null;
   setTimer(0);
   for(var i=0;i<6;i++){
     document.getElementById('pb'+i).classList.remove('done');
