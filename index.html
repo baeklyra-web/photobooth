@@ -691,7 +691,7 @@ html, body {
 <!-- ② 카메라 -->
 <div class="screen hidden" id="screen-camera">
   <div style="position:absolute;top:0;left:0;right:0;z-index:50;padding:16px 20px;display:flex;align-items:center;">
-    <button id="btn-cam-back" style="background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:15px;font-weight:500;padding:8px 16px;border-radius:20px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(255,255,255,0.1);font-family:'Noto Sans KR',sans-serif;">← 중단</button>
+    <button id="btn-cam-back" style="background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:15px;font-weight:500;padding:8px 16px;border-radius:20px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(255,255,255,0.1);font-family:'Noto Sans KR',sans-serif;">‹ 뒤로</button>
   </div>
   <video id="video" autoplay playsinline muted></video>
   <div class="cam-bottom">
@@ -840,7 +840,8 @@ function setTimer(sec) {
     var btn = document.getElementById('tbtn-'+s);
     if (btn) btn.classList.toggle('active', s === sec);
   });
-  document.getElementById('timer-display').textContent = sec === 0 ? '바로' : sec+'초';
+  var td = document.getElementById('timer-display');
+  if (td) td.textContent = sec === 0 ? '바로' : sec+'초';
 }
 
 function flipCamera() {
@@ -922,7 +923,7 @@ function captureFrame() {
   // progress
   document.getElementById('pb' + shotIndex).classList.add('done');
   shotIndex++;
-  document.getElementById('shot-label').textContent = shotIndex + ' / 6';
+  var sl=document.getElementById('shot-label'); if(sl) sl.textContent=shotIndex+' / 6';
 
   if (shotIndex >= 6) {
     isShooting = false;
@@ -988,7 +989,7 @@ function updateSelectUI() {
       badge.textContent = '';
     }
   });
-  document.getElementById('select-sub').textContent = selected.length + ' / 4 선택됨';
+  var ss=document.getElementById('select-sub'); if(ss) ss.textContent=selected.length+' / 4 선택됨';
   var done = document.getElementById('btn-select-done');
   if (selected.length === 4) {
     done.style.opacity = '1';
@@ -1094,20 +1095,21 @@ function applyPreview() {
   var textColor = isBlack ? '#888' : rg;
 
   if (isPercent) {
-    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;font-size:9px;font-weight:400;letter-spacing:3px;color:'+rg+';text-transform:uppercase;';
-    dateEl.innerHTML = '<span style="font-size:11px;font-style:italic;font-weight:600;letter-spacing:1px;font-family:Georgia,serif;">Percent</span>&nbsp;&nbsp;<span style="letter-spacing:4px;">PARTYROOM</span>';
+    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;color:'+rg+';line-height:1.4;';
+    dateEl.innerHTML = '<div style="font-size:13px;font-style:italic;font-weight:600;letter-spacing:1px;font-family:Georgia,serif;">Percent</div><div style="font-size:8px;font-weight:400;letter-spacing:5px;">PARTYROOM</div>';
   } else {
     var now = new Date();
     var dateStr = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
-    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:'+textColor+';';
-    dateEl.innerHTML = '<span style="font-size:10px;font-style:italic;font-weight:600;letter-spacing:1px;font-family:Georgia,serif;">Percent</span>&nbsp;&nbsp;<span style="letter-spacing:4px;">PARTYROOM</span><br><span style="font-size:7px;letter-spacing:2px;opacity:0.6;">'+dateStr+'</span>';
+    dateEl.style.cssText = 'text-align:center;font-family:"Helvetica Neue",Arial,sans-serif;color:'+textColor+';line-height:1.5;';
+    dateEl.innerHTML = '<div style="font-size:11px;font-style:italic;font-weight:600;font-family:Georgia,serif;">Percent</div><div style="font-size:7px;letter-spacing:4px;">PARTYROOM</div><div style="font-size:7px;letter-spacing:2px;opacity:0.5;margin-top:2px;">'+dateStr+'</div>';
   }
 }
 
 // ── QR ──
 function showQR() {
   switchScreen('screen-qr');
-  document.getElementById('video-status').textContent = '영상 처리 중...';
+  var statusEl = document.getElementById('video-status');
+  if (statusEl) statusEl.textContent = '영상 처리 중...';
   buildCompositeAndQR();
   if (videoBlob) {
     makeVideoDownload();
@@ -1135,7 +1137,7 @@ function stopShooting() {
     var cell = document.getElementById('tc'+i);
     cell.innerHTML = '<span class="num">'+(i+1)+'</span>';
   }
-  document.getElementById('shot-label').textContent = '0 / 6';
+  var sl2=document.getElementById('shot-label'); if(sl2) sl2.textContent='0 / 6';
   document.getElementById('btn-shutter').disabled = false;
   document.getElementById('btn-cam-done').style.display = 'none';
   document.getElementById('timer-select').style.pointerEvents = 'auto';
@@ -1158,15 +1160,16 @@ function buildSlideshowVideo() {
 
   // MediaRecorder 지원 확인
   var mimeType = '';
+  var vsEl = document.getElementById('video-status');
   if (typeof MediaRecorder === 'undefined') {
-    document.getElementById('video-status').textContent = '이 기기는 영상 생성 미지원 😢';
+    if (vsEl) vsEl.textContent = '이 기기는 영상 생성 미지원 😢';
     return;
   }
   mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8'
            : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm'
            : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
   if (!mimeType) {
-    document.getElementById('video-status').textContent = '이 기기는 영상 생성 미지원 😢';
+    if (vsEl) vsEl.textContent = '이 기기는 영상 생성 미지원 😢';
     return;
   }
 
@@ -1335,21 +1338,19 @@ function drawFrameTop(ctx, cw, isPercent, isBlack) {
   ctx.textAlign = 'center';
 
   if (isPercent) {
-    // 점 장식
     drawDots(ctx, cw, 18, isBlack);
-    // 이탤릭 + 스페이싱 조합
-    ctx.font = 'italic 600 22px Georgia, serif';
+    // Percent (이탤릭 세리프)
+    ctx.font = 'italic 22px Georgia, serif';
     ctx.fillStyle = rg;
-    ctx.fillText('Percent', cw/2 - 28, 54);
-    ctx.font = '300 11px "Helvetica Neue", Arial, sans-serif';
-    ctx.letterSpacing = '6px';
+    ctx.fillText('Percent', cw/2, 44);
+    // PARTYROOM (산세리프, 자간 넓게)
+    ctx.font = '11px "Helvetica Neue", Arial, sans-serif';
     ctx.fillStyle = rg;
-    ctx.fillText('PARTYROOM', cw/2 + 30, 54);
-    ctx.letterSpacing = '0px';
+    ctx.fillText('P A R T Y R O O M', cw/2, 60);
     // 얇은 라인
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(20, 64); ctx.lineTo(cw-20, 64); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(20, 68); ctx.lineTo(cw-20, 68); ctx.stroke();
   } else {
     // 상단 라인
     ctx.strokeStyle = lineColor;
@@ -1367,32 +1368,27 @@ function drawFrameBottom(ctx, cw, ch, isPercent, isBlack) {
   if (isPercent) {
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(20, ch-68); ctx.lineTo(cw-68, ch-68); ctx.stroke();
-    // 점 장식
+    ctx.beginPath(); ctx.moveTo(20, ch-72); ctx.lineTo(cw-20, ch-72); ctx.stroke();
     drawDots(ctx, cw, ch-20, isBlack);
-    // 하단 레터링
-    ctx.font = 'italic 600 22px Georgia, serif';
+    ctx.font = 'italic 22px Georgia, serif';
     ctx.fillStyle = rg;
-    ctx.fillText('Percent', cw/2 - 28, ch-34);
-    ctx.font = '300 11px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText('Percent', cw/2, ch-50);
+    ctx.font = '11px "Helvetica Neue", Arial, sans-serif';
     ctx.fillStyle = rg;
-    ctx.fillText('PARTYROOM', cw/2 + 30, ch-34);
+    ctx.fillText('P A R T Y R O O M', cw/2, ch-34);
   } else {
-    // 하단 라인
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 0.8;
-    ctx.beginPath(); ctx.moveTo(18, ch-52); ctx.lineTo(cw-18, ch-52); ctx.stroke();
-    // 레터링
-    ctx.font = 'italic 600 18px Georgia, serif';
+    ctx.beginPath(); ctx.moveTo(18, ch-58); ctx.lineTo(cw-18, ch-58); ctx.stroke();
+    ctx.font = 'italic 18px Georgia, serif';
     ctx.fillStyle = rg;
-    ctx.fillText('Percent', cw/2 - 22, ch-26);
-    ctx.font = '300 9px "Helvetica Neue", Arial, sans-serif';
+    ctx.fillText('Percent', cw/2, ch-38);
+    ctx.font = '9px "Helvetica Neue", Arial, sans-serif';
     ctx.fillStyle = rg;
-    ctx.fillText('PARTYROOM', cw/2 + 28, ch-26);
-    // 날짜
+    ctx.fillText('P A R T Y R O O M', cw/2, ch-24);
     var now = new Date();
     var ds = now.getFullYear()+'.'+String(now.getMonth()+1).padStart(2,'0')+'.'+String(now.getDate()).padStart(2,'0');
-    ctx.font = '300 9px "Helvetica Neue", Arial, sans-serif';
+    ctx.font = '9px "Helvetica Neue", Arial, sans-serif';
     ctx.fillStyle = subColor;
     ctx.fillText(ds, cw/2, ch-10);
   }
@@ -1483,7 +1479,7 @@ function restartAll() {
     var cell=document.getElementById('tc'+i);
     cell.innerHTML='<span class="num">'+(i+1)+'</span>';
   }
-  document.getElementById('shot-label').textContent='0 / 6';
+  var sl3=document.getElementById('shot-label'); if(sl3) sl3.textContent='0 / 6';
   document.getElementById('btn-shutter').disabled=false;
   document.getElementById('btn-cam-done').style.display='none';
   document.getElementById('timer-select').style.pointerEvents='auto';
