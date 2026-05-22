@@ -860,8 +860,8 @@ function flipCamera() {
 function startShot() {
   if (isShooting || shotIndex >= 6) return;
   isShooting = true;
-  document.getElementById('btn-shutter').disabled = true;
-  document.getElementById('timer-select').style.pointerEvents = 'none';
+  var bs=document.getElementById('btn-shutter'); if(bs) bs.disabled=true;
+  var ts=document.getElementById('timer-select'); if(ts) ts.style.pointerEvents='none';
   videoBlob = null;
   videoQRDone = false;
   runCountdownThenShoot();
@@ -912,8 +912,8 @@ function captureFrame() {
 
   if (shotIndex >= 6) {
     isShooting = false;
-    document.getElementById('timer-select').style.pointerEvents = 'auto';
-    document.getElementById('btn-cam-done').style.display = 'block';
+    var ts2=document.getElementById('timer-select'); if(ts2) ts2.style.pointerEvents='auto';
+    var bcd=document.getElementById('btn-cam-done'); if(bcd) bcd.style.display='block';
     // 슬라이드쇼 영상 백그라운드 생성
     buildSlideshowVideo();
   } else {
@@ -1122,9 +1122,9 @@ function stopShooting() {
     if (pb2) pb2.classList.remove('done');
   }
   var sl2=document.getElementById('shot-label'); if(sl2) sl2.textContent='0 / 6';
-  document.getElementById('btn-shutter').disabled = false;
-  document.getElementById('btn-cam-done').style.display = 'none';
-  document.getElementById('timer-select').style.pointerEvents = 'auto';
+  var bs2=document.getElementById('btn-shutter'); if(bs2) bs2.disabled=false;
+  var bcd2=document.getElementById('btn-cam-done'); if(bcd2) bcd2.style.display='none';
+  var ts2=document.getElementById('timer-select'); if(ts2) ts2.style.pointerEvents='auto';
   // 카메라 끄고 홈으로
   if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
   switchScreen('screen-intro');
@@ -1463,9 +1463,9 @@ function restartAll() {
     if(pb) pb.classList.remove('done');
   }
   var sl3=document.getElementById('shot-label'); if(sl3) sl3.textContent='0 / 6';
-  document.getElementById('btn-shutter').disabled=false;
-  document.getElementById('btn-cam-done').style.display='none';
-  document.getElementById('timer-select').style.pointerEvents='auto';
+  var bs3=document.getElementById('btn-shutter'); if(bs3) bs3.disabled=false;
+  var bcd3=document.getElementById('btn-cam-done'); if(bcd3) bcd3.style.display='none';
+  var ts3=document.getElementById('timer-select'); if(ts3) ts3.style.pointerEvents='auto';
   if(stream){ stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
   switchScreen('screen-intro');
 }
@@ -1497,7 +1497,7 @@ function bindBtn(id, fn) {
 }
 
 window.addEventListener('load', function() {
-  bindBtn('btn-banner-close', function(){ document.getElementById('home-banner').style.display='none'; });
+  bindBtn('btn-banner-close', function(){ var hb=document.getElementById('home-banner'); if(hb) hb.style.display='none'; });
   bindBtn('btn-go-intro',     function(){ showIntro(); });
   bindBtn('btn-start-camera', function(){ startCamera(); });
   bindBtn('btn-cam-back',     function(){ stopShooting(); });
