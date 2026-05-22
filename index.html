@@ -35,9 +35,8 @@ html, body {
   align-items: center;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+.screen.hidden { display: none; }
 
 /* ─── HOME ─── */
 #screen-intro {
@@ -871,38 +870,8 @@ function startShot() {
   isShooting = true;
   document.getElementById('btn-shutter').disabled = true;
   document.getElementById('timer-select').style.pointerEvents = 'none';
-
-  // 영상 녹화 시작
-  recordedChunks = [];
   videoBlob = null;
   videoQRDone = false;
-  try {
-    var mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8'
-                 : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm'
-                 : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
-    var options = mimeType ? { mimeType: mimeType } : {};
-    mediaRecorder = new MediaRecorder(stream, options);
-    mediaRecorder.ondataavailable = function(e) {
-      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
-    };
-    mediaRecorder.onstop = function() {
-      var mime = mediaRecorder.mimeType || 'video/webm';
-      videoBlob = new Blob(recordedChunks, { type: mime });
-      if (!document.getElementById('screen-qr').classList.contains('hidden')) {
-        makeVideoDownload();
-      }
-    };
-    mediaRecorder.start();
-    // 10초 후 자동 중단
-    setTimeout(function() {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-    }, 10000);
-  } catch(e) {
-    mediaRecorder = null;
-  }
-
   runCountdownThenShoot();
 }
 
@@ -959,6 +928,8 @@ function captureFrame() {
     isShooting = false;
     document.getElementById('timer-select').style.pointerEvents = 'auto';
     document.getElementById('btn-cam-done').style.display = 'block';
+    // 슬라이드쇼 영상 백그라운드 생성
+    buildSlideshowVideo();
   } else {
     setTimeout(function() {
       runCountdownThenShoot();
@@ -1171,6 +1142,102 @@ function stopShooting() {
   // 카메라 끄고 홈으로
   if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
   switchScreen('screen-intro');
+}
+
+function buildSlideshowVideo() {
+  // 6장 × 2.5초 = 15초 슬라이드쇼
+  var fps = 24;
+  var secPerSlide = 2.5;
+  var totalFrames = Math.round(fps * secPerSlide * allShots.length);
+
+  // 캔버스 크기 (세로 비율)
+  var cw = 480, ch = 640;
+  var offCanvas = document.createElement('canvas');
+  offCanvas.width = cw; offCanvas.height = ch;
+  var ctx = offCanvas.getContext('2d');
+
+  // MediaRecorder 지원 확인
+  var mimeType = '';
+  if (typeof MediaRecorder === 'undefined') {
+    document.getElementById('video-status').textContent = '이 기기는 영상 생성 미지원 😢';
+    return;
+  }
+  mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8') ? 'video/webm;codecs=vp8'
+           : MediaRecorder.isTypeSupported('video/webm') ? 'video/webm'
+           : MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
+  if (!mimeType) {
+    document.getElementById('video-status').textContent = '이 기기는 영상 생성 미지원 😢';
+    return;
+  }
+
+  var canvasStream = offCanvas.captureStream(fps);
+  var chunks = [];
+  var mr = new MediaRecorder(canvasStream, { mimeType: mimeType });
+  mr.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+  mr.onstop = function() {
+    videoBlob = new Blob(chunks, { type: mimeType });
+    // QR 화면이 열려있으면 바로 공유 버튼 생성
+    if (!document.getElementById('screen-qr').classList.contains('hidden')) {
+      makeVideoDownload();
+    }
+  };
+  mr.start();
+
+  // 이미지 로드
+  var imgs = [];
+  var loaded = 0;
+  allShots.forEach(function(src, i) {
+    var img = new Image();
+    img.onload = function() {
+      imgs[i] = img;
+      loaded++;
+      if (loaded === allShots.length) startRendering();
+    };
+    img.src = src;
+  });
+
+  function startRendering() {
+    var frameIdx = 0;
+    var interval = 1000 / fps;
+
+    function renderFrame() {
+      if (frameIdx >= totalFrames) {
+        mr.stop();
+        return;
+      }
+      var slideIdx = Math.floor(frameIdx / (fps * secPerSlide));
+      if (slideIdx >= imgs.length) slideIdx = imgs.length - 1;
+      var img = imgs[slideIdx];
+
+      // 페이드 효과
+      var frameInSlide = frameIdx % Math.round(fps * secPerSlide);
+      var fadeFrames = Math.round(fps * 0.3);
+      var alpha = 1;
+      if (frameInSlide < fadeFrames) alpha = frameInSlide / fadeFrames;
+      else if (frameInSlide > Math.round(fps * secPerSlide) - fadeFrames)
+        alpha = (Math.round(fps * secPerSlide) - frameInSlide) / fadeFrames;
+
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.globalAlpha = alpha;
+
+      // 이미지 cover 방식으로 그리기
+      var scale = Math.max(cw / img.width, ch / img.height);
+      var sw = img.width * scale, sh = img.height * scale;
+      ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+      ctx.globalAlpha = 1;
+
+      // Percent Partyroom 워터마크
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = 'italic 14px Georgia,serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('Percent Partyroom', cw - 12, ch - 12);
+
+      frameIdx++;
+      setTimeout(renderFrame, interval);
+    }
+    renderFrame();
+  }
 }
 
 function makeVideoDownload() {
