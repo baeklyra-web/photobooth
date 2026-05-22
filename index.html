@@ -631,7 +631,7 @@ html, body {
         <div class="home-banner-text">QR로 사진과 영상을 바로 받아가요.</div>
       </div>
     </div>
-    <button class="home-banner-close" onclick="document.getElementById('home-banner').style.display='none'">✕</button>
+    <button class="home-banner-close" id="btn-banner-close">✕</button>
   </div>
 
   <!-- 로고 영역 -->
@@ -652,7 +652,7 @@ html, body {
   <div class="home-bottom">
     <div class="home-count">생성된 네컷 개수 : <b id="shot-total">0</b></div>
     <button class="btn-album">앨범에서 선택</button>
-    <button class="btn-main" onclick="showIntro()">촬영하기</button>
+    <button class="btn-main" id="btn-go-intro">촬영하기</button>
   </div>
 
 
@@ -672,7 +672,7 @@ html, body {
       <div class="guide-item">✕ 뒤로가기로 촬영을 중단할 수 있어요.</div>
       <div class="guide-item" style="border:none;">⊞ QR로 사진과 영상을 바로 받아가요.</div>
     </div>
-    <button class="btn-main" onclick="startCamera()">촬영하기</button>
+    <button class="btn-main" id="btn-start-camera">촬영하기</button>
   </div>
 </div>
 
@@ -706,7 +706,7 @@ html, body {
     <div class="shutter-area">
       <span class="shot-label" id="shot-label">0 / 6</span>
       <button id="btn-shutter"></button>
-      <button id="btn-flip" onclick="flipCamera()" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:transparent;color:#fff;font-size:20px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;">🔄</button>
+      <button id="btn-flip" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:transparent;color:#fff;font-size:20px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;">🔄</button>
     </div>
     <button class="btn-cam-done" id="btn-cam-done">4장 고르기 →</button>
   </div>
@@ -717,7 +717,7 @@ html, body {
   <div class="select-title">마음에 드는 4장을 골라요</div>
   <div class="select-sub" id="select-sub">0 / 4 선택됨</div>
   <div class="select-grid" id="select-grid"></div>
-  <button class="btn-main" id="btn-select-done" onclick="showFrame()" style="width:100%;opacity:0.3;pointer-events:none;">다음 →</button>
+  <button class="btn-main" id="btn-select-done" style="width:100%;opacity:0.3;pointer-events:none;">다음 →</button>
 </div>
 
 <!-- ④ 프레임 & 필터 -->
@@ -736,8 +736,8 @@ html, body {
   <div class="scroll-row" id="filter-chips"></div>
 
   <div class="frame-btn-row" style="width:100%;margin-top:16px;">
-    <button class="btn-sub" onclick="showSelect()">← 다시 고르기</button>
-    <button class="btn-sub primary" onclick="showQR()">QR 받기 →</button>
+    <button class="btn-sub" id="btn-reselect">← 다시 고르기</button>
+    <button class="btn-sub primary" id="btn-go-qr">QR 받기 →</button>
   </div>
 </div>
 
@@ -749,9 +749,9 @@ html, body {
     <div class="qr-desc">폰 카메라로 스캔하면<br>사진이 바로 열려요.<br>길게 눌러서 저장하세요!</div>
   </div>
   <div class="qr-btn-row">
-    <button class="btn-sub" onclick="switchScreen('screen-frame')">← 돌아가기</button>
-    <button class="btn-sub" onclick="restartAll()">홈으로</button>
-    <button class="btn-sub primary" onclick="restartAll(); startCamera()">새로 찍기</button>
+    <button class="btn-sub" id="btn-qr-back">← 돌아가기</button>
+    <button class="btn-sub" id="btn-qr-home">홈으로</button>
+    <button class="btn-sub primary" id="btn-qr-new">새로 찍기</button>
   </div>
 </div>
 
@@ -1315,6 +1315,43 @@ function switchScreen(id) {
   });
   document.getElementById(id).classList.remove('hidden');
 }
+
+// ── iOS12 호환 이벤트 바인딩 ──
+// touchend + click 둘 다 등록, 중복 실행 방지
+function bindBtn(id, fn) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var fired = false;
+  function handler(e) {
+    e.preventDefault();
+    if (fired) return;
+    fired = true;
+    setTimeout(function(){ fired = false; }, 500);
+    fn();
+  }
+  el.addEventListener('touchend', handler, {passive: false});
+  el.addEventListener('click', handler, false);
+}
+
+window.addEventListener('load', function() {
+  bindBtn('btn-banner-close', function(){ document.getElementById('home-banner').style.display='none'; });
+  bindBtn('btn-go-intro',     function(){ showIntro(); });
+  bindBtn('btn-start-camera', function(){ startCamera(); });
+  bindBtn('btn-shutter',      function(){ startShot(); });
+  bindBtn('btn-flip',         function(){ flipCamera(); });
+  bindBtn('btn-cam-done',     function(){ showSelect(); });
+  bindBtn('btn-select-done',  function(){ showFrame(); });
+  bindBtn('btn-reselect',     function(){ showSelect(); });
+  bindBtn('btn-go-qr',        function(){ showQR(); });
+  bindBtn('btn-qr-back',      function(){ switchScreen('screen-frame'); });
+  bindBtn('btn-qr-home',      function(){ restartAll(); });
+  bindBtn('btn-qr-new',       function(){ restartAll(); startCamera(); });
+
+  // 타이머 버튼
+  [0,5,10,15,20].forEach(function(s){
+    bindBtn('tbtn-'+s, function(){ setTimer(s); });
+  });
+});
 </script>
 </body>
 </html>
