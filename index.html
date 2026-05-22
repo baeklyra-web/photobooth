@@ -1231,20 +1231,20 @@ function renderQR(dataURL) {
   ctx.textAlign = 'center';
   ctx.fillText('업로드 중...', 110, 115);
 
-  var cloudName = 'dyppqgbhm';
-  var uploadPreset = 'percentcut';
+  // base64에서 헤더 제거
+  var base64 = dataURL.split(',')[1];
 
   var formData = new FormData();
-  formData.append('file', dataURL);
-  formData.append('upload_preset', uploadPreset);
+  formData.append('key', '12128642b5dd947f967c34e8f15a4162');
+  formData.append('image', base64);
 
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + cloudName + '/image/upload', true);
+  xhr.open('POST', 'https://api.imgbb.com/1/upload', true);
   xhr.onload = function() {
     ctx.clearRect(0,0,220,220);
     if (xhr.status === 200) {
       var res = JSON.parse(xhr.responseText);
-      var imageUrl = res.secure_url;
+      var imageUrl = res.data.url;
       var div = document.createElement('div');
       new QRCode(div, {
         text: imageUrl,
@@ -1266,7 +1266,6 @@ function renderQR(dataURL) {
       ctx.fillStyle='#eee'; ctx.fillRect(0,0,220,220);
       ctx.fillStyle='#e55'; ctx.font='13px sans-serif'; ctx.textAlign='center';
       ctx.fillText('업로드 실패 ('+xhr.status+')', 110, 100);
-      ctx.fillText(xhr.responseText.substring(0,40), 110, 125);
     }
   };
   xhr.onerror = function() {
