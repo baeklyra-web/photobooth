@@ -213,57 +213,58 @@ html, body {
   padding: 0;
 }
 #video {
-  width: 100%;
-  max-height: 62vh;
+  width: 100%; height: 100%;
   object-fit: cover;
   display: block;
   background: #000;
 }
 .cam-bottom {
-  flex: 1;
   width: 100%;
-  background: #111;
+  background: transparent;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-around;
-  padding: 16px 24px 28px;
-  gap: 12px;
+  padding: 0 32px 40px;
+  gap: 16px;
 }
-.progress-bar {
-  display: flex; gap: 6px;
+.cam-shot-count {
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 24px;
+  border-radius: 24px;
+  letter-spacing: 1px;
 }
-.pbar {
-  height: 3px; width: 36px;
-  background: #444;
-  border-radius: 2px;
-  transition: background 0.3s;
-}
-.pbar.done { background: #fff; }
-.pbar.current { background: #aaa; }
-
-.shutter-area {
+.cam-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 32px;
+  justify-content: space-between;
   width: 100%;
 }
-.shot-label {
-  color: #888;
-  font-size: 13px;
-  font-weight: 300;
-  min-width: 48px;
-  text-align: center;
+.cam-icon-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(40,40,40,0.75);
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: rgba(255,255,255,0.1);
 }
 #btn-shutter {
   width: 76px; height: 76px;
   border-radius: 50%;
   border: 3px solid #fff;
-  background: transparent;
+  background: rgba(0,0,0,0.55);
   cursor: pointer;
   position: relative;
   -webkit-appearance: none;
+  flex-shrink: 0;
 }
 #btn-shutter::after {
   content: '';
@@ -276,54 +277,35 @@ html, body {
 #btn-shutter:active::after { transform: scale(0.85); }
 #btn-shutter:disabled { opacity: 0.25; pointer-events: none; }
 
-.timer-select {
-  display: flex; gap: 6px;
-  width: 100%;
-  justify-content: center;
+/* 타이머 팝업 */
+.timer-popup {
+  display: none;
+  position: absolute;
+  bottom: 160px;
+  left: 32px;
+  background: rgba(30,30,30,0.92);
+  border-radius: 16px;
+  padding: 8px;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
 }
-.timer-btn {
-  flex: 1;
-  padding: 8px 0;
-  border-radius: 20px;
-  border: 1.5px solid #444;
+.timer-popup.show { display: flex; }
+.timer-popup-btn {
+  padding: 10px 24px;
+  border: none;
   background: transparent;
-  color: #888;
+  color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
+  border-radius: 10px;
+  text-align: left;
   -webkit-appearance: none;
-  transition: all 0.2s;
 }
-.timer-btn.active {
-  background: #fff;
-  border-color: #fff;
-  color: #111;
-  font-weight: 700;
-}
+.timer-popup-btn.active { background: rgba(255,255,255,0.2); font-weight: 700; }
 
-.thumb-strip {
-  display: flex; gap: 6px;
-  width: 100%;
-}
-.thumb-cell {
-  flex: 1;
-  aspect-ratio: 3/4;
-  background: #2a2a2a;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-}
-.thumb-cell img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.thumb-cell .num {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: #555; font-size: 12px;
-}
 .btn-cam-done {
   width: 100%;
   padding: 16px;
@@ -343,17 +325,15 @@ html, body {
 .countdown-overlay {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.5);
-  font-size: 120px;
   font-weight: 900;
-  color: #fff;
+  color: #111;
   opacity: 0;
   pointer-events: none;
   z-index: 200;
   transition: opacity 0.15s;
   font-family: 'Noto Sans KR', sans-serif;
 }
-.countdown-overlay.show { opacity: 1; pointer-events: none; }
+.countdown-overlay.show { opacity: 1; }
 
 /* flash */
 #flash {
@@ -690,39 +670,44 @@ html, body {
 
 <!-- ② 카메라 -->
 <div class="screen hidden" id="screen-camera">
-  <div style="position:absolute;top:0;left:0;right:0;z-index:50;padding:16px 20px;display:flex;align-items:center;">
-    <button id="btn-cam-back" style="background:rgba(0,0,0,0.4);border:none;color:#fff;font-size:15px;font-weight:500;padding:8px 16px;border-radius:20px;cursor:pointer;-webkit-appearance:none;-webkit-tap-highlight-color:rgba(255,255,255,0.1);font-family:'Noto Sans KR',sans-serif;">‹ 뒤로</button>
+  <video id="video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;top:0;left:0;"></video>
+
+  <!-- 상단: 뒤로가기 -->
+  <div style="position:absolute;top:0;left:0;right:0;z-index:50;padding:52px 20px 0;display:flex;align-items:center;">
+    <button id="btn-cam-back" style="background:none;border:none;color:#fff;font-size:28px;cursor:pointer;-webkit-appearance:none;padding:8px;line-height:1;">‹</button>
   </div>
-  <video id="video" autoplay playsinline muted></video>
+
+  <!-- 카운트다운 중앙 -->
+  <div class="countdown-overlay" id="countdown">
+    <div style="text-align:center;">
+      <div style="font-size:18px;font-weight:400;margin-bottom:4px;opacity:0.85;">남은 시간</div>
+      <div id="countdown-num" style="font-size:120px;font-weight:700;line-height:1;">-</div>
+    </div>
+  </div>
+
+  <!-- 하단 컨트롤 -->
   <div class="cam-bottom">
-    <div class="progress-bar" id="progress-bar">
-      <div class="pbar" id="pb0"></div>
-      <div class="pbar" id="pb1"></div>
-      <div class="pbar" id="pb2"></div>
-      <div class="pbar" id="pb3"></div>
-      <div class="pbar" id="pb4"></div>
-      <div class="pbar" id="pb5"></div>
+    <!-- 촬영 장수 -->
+    <div class="cam-shot-count" id="shot-label">0/6</div>
+
+    <!-- 타이머 팝업 -->
+    <div class="timer-popup" id="timer-popup">
+      <button class="timer-popup-btn active" id="tbtn-0">바로 촬영</button>
+      <button class="timer-popup-btn" id="tbtn-5">5초</button>
+      <button class="timer-popup-btn" id="tbtn-10">10초</button>
+      <button class="timer-popup-btn" id="tbtn-15">15초</button>
+      <button class="timer-popup-btn" id="tbtn-20">20초</button>
     </div>
-    <div class="thumb-strip" id="thumb-strip">
-      <div class="thumb-cell" id="tc0"><span class="num">1</span></div>
-      <div class="thumb-cell" id="tc1"><span class="num">2</span></div>
-      <div class="thumb-cell" id="tc2"><span class="num">3</span></div>
-      <div class="thumb-cell" id="tc3"><span class="num">4</span></div>
-      <div class="thumb-cell" id="tc4"><span class="num">5</span></div>
-      <div class="thumb-cell" id="tc5"><span class="num">6</span></div>
-    </div>
-    <div class="timer-select" id="timer-select">
-      <button class="timer-btn active" id="tbtn-0"  >바로</button>
-      <button class="timer-btn"        id="tbtn-5"  >5초</button>
-      <button class="timer-btn"        id="tbtn-10" >10초</button>
-      <button class="timer-btn"        id="tbtn-15" >15초</button>
-      <button class="timer-btn"        id="tbtn-20" >20초</button>
-    </div>
-    <div class="shutter-area">
-      <span class="shot-label" id="shot-label">0 / 6</span>
+
+    <div class="cam-controls">
+      <!-- 타이머 아이콘 -->
+      <button class="cam-icon-btn" id="btn-timer-icon">⏱</button>
+      <!-- 셔터 -->
       <button id="btn-shutter"></button>
-      <button id="btn-flip" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:transparent;color:#fff;font-size:20px;cursor:pointer;-webkit-appearance:none;display:flex;align-items:center;justify-content:center;">🔄</button>
+      <!-- 카메라 전환 -->
+      <button class="cam-icon-btn" id="btn-flip">↺</button>
     </div>
+
     <button class="btn-cam-done" id="btn-cam-done">4장 고르기 →</button>
   </div>
 </div>
@@ -840,8 +825,14 @@ function setTimer(sec) {
     var btn = document.getElementById('tbtn-'+s);
     if (btn) btn.classList.toggle('active', s === sec);
   });
-  var td = document.getElementById('timer-display');
-  if (td) td.textContent = sec === 0 ? '바로' : sec+'초';
+  // 팝업 닫기
+  var popup = document.getElementById('timer-popup');
+  if (popup) popup.classList.remove('show');
+}
+
+function toggleTimerPopup() {
+  var popup = document.getElementById('timer-popup');
+  if (popup) popup.classList.toggle('show');
 }
 
 function flipCamera() {
@@ -878,17 +869,17 @@ function startShot() {
 
 function runCountdownThenShoot() {
   if (currentTimer === 0) {
-    // 바로 촬영
     captureFrame();
     return;
   }
   var count = currentTimer;
-  countdown.textContent = count;
+  var numEl = document.getElementById('countdown-num');
+  if (numEl) numEl.textContent = count;
   countdown.classList.add('show');
   var t = setInterval(function() {
     count--;
     if (count > 0) {
-      countdown.textContent = count;
+      if (numEl) numEl.textContent = count;
     } else {
       clearInterval(t);
       countdown.classList.remove('show');
@@ -913,15 +904,9 @@ function captureFrame() {
   var url = oc2.toDataURL('image/jpeg', 0.85);
   allShots.push(url);
 
-  // thumb
-  var cell = document.getElementById('tc' + shotIndex);
-  cell.innerHTML = '';
-  var img = document.createElement('img');
-  img.src = url;
-  cell.appendChild(img);
-
   // progress
-  document.getElementById('pb' + shotIndex).classList.add('done');
+  var pb = document.getElementById('pb' + shotIndex);
+  if (pb) pb.classList.add('done');
   shotIndex++;
   var sl=document.getElementById('shot-label'); if(sl) sl.textContent=shotIndex+' / 6';
 
@@ -1133,9 +1118,8 @@ function stopShooting() {
   // 상태 초기화
   allShots = []; selected = []; shotIndex = 0;
   for (var i = 0; i < 6; i++) {
-    document.getElementById('pb'+i).classList.remove('done');
-    var cell = document.getElementById('tc'+i);
-    cell.innerHTML = '<span class="num">'+(i+1)+'</span>';
+    var pb2 = document.getElementById('pb'+i);
+    if (pb2) pb2.classList.remove('done');
   }
   var sl2=document.getElementById('shot-label'); if(sl2) sl2.textContent='0 / 6';
   document.getElementById('btn-shutter').disabled = false;
@@ -1475,9 +1459,8 @@ function restartAll() {
   }
   setTimer(0);
   for(var i=0;i<6;i++){
-    document.getElementById('pb'+i).classList.remove('done');
-    var cell=document.getElementById('tc'+i);
-    cell.innerHTML='<span class="num">'+(i+1)+'</span>';
+    var pb=document.getElementById('pb'+i);
+    if(pb) pb.classList.remove('done');
   }
   var sl3=document.getElementById('shot-label'); if(sl3) sl3.textContent='0 / 6';
   document.getElementById('btn-shutter').disabled=false;
@@ -1518,6 +1501,7 @@ window.addEventListener('load', function() {
   bindBtn('btn-go-intro',     function(){ showIntro(); });
   bindBtn('btn-start-camera', function(){ startCamera(); });
   bindBtn('btn-cam-back',     function(){ stopShooting(); });
+  bindBtn('btn-timer-icon',   function(){ toggleTimerPopup(); });
   bindBtn('btn-shutter',      function(){ startShot(); });
   bindBtn('btn-flip',         function(){ flipCamera(); });
   bindBtn('btn-cam-done',     function(){ showSelect(); });
